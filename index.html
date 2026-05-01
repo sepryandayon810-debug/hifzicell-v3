@@ -8,12 +8,12 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="stylesheet" href="css/themes.css">
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  
-  <link rel="stylesheet" href="css/themes.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -1056,18 +1056,7 @@
 </head>
 <body class="theme-ocean">
 
-  <!-- AUTH CHECK — Redirect ke login kalau belum login -->
-  <script>
-    (function() {
-      // Cek session localStorage dulu (lebih cepat)
-      var session = localStorage.getItem("webpos_session_v3");
-      if (!session) {
-        // Belum ada session, cek Firebase Auth (async)
-        // Tapi karena Firebase belum load, kita cek di DOMContentLoaded
-        window.__needAuthCheck = true;
-      }
-    })();
-  </script>
+
 
   <!-- HEADER -->
   <header class="header">
@@ -1527,11 +1516,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
   <!-- Services -->
   <script src="js/core/firebase-config.js"></script>
   <script src="js/services/setting-service.js"></script>
@@ -1689,7 +1673,7 @@
 
       // User info
       var user = window.userService.getCurrent();
-      document.getElementById("nav-user-name").textContent = user.name || "Kasir";
+      document.getElementById("nav-user-name").textContent = user.name || user.username || "Kasir";
       document.getElementById("nav-user-role").textContent = (user.role || "KASIR").toUpperCase();
     }
 
@@ -1804,8 +1788,19 @@
     /* ===== INIT ===== */
     document.addEventListener("DOMContentLoaded", function() {
       // Auth check — redirect ke login kalau belum login
-      if (window.__needAuthCheck && !auth.currentUser) {
-        window.location.href = "login.html";
+      var session = localStorage.getItem("webpos_session_v3");
+      if (!session) {
+        auth.onAuthStateChanged(function(user) {
+          if (!user) {
+            window.location.href = "login.html";
+          }
+        });
+        // Set timeout fallback kalau onAuthStateChanged lambat
+        setTimeout(function() {
+          if (!auth.currentUser) {
+            window.location.href = "login.html";
+          }
+        }, 2000);
         return;
       }
 
@@ -1846,8 +1841,10 @@
       if (hour < 11) greet = "Selamat pagi";
       else if (hour < 15) greet = "Selamat siang";
       else if (hour < 18) greet = "Selamat sore";
-      document.getElementById("greeting-text").textContent = 
-        greet + ", " + (window.userService.getCurrent().name || "Kasir") + ". Siap melayani hari ini?";
+      var cu = window.userService.getCurrent();
+        var displayName = cu.name || cu.username || "Kasir";
+        document.getElementById("greeting-text").textContent = 
+          greet + ", " + displayName + ". Siap melayani hari ini?";
     });
   </script>
 </body>
