@@ -1483,14 +1483,10 @@
 
       // Shift status
       var current = window.cashService.current;
-      // FIX: kalau current hilang karena refresh, tapi summary punya modal > 0
-      if (!current && summary.modal_awal > 0) {
-        current = {
-          modal_awal: summary.modal_awal,
-          kasirName: window.userService.getCurrent().name || "Kasir"
-        };
-        window.cashService.current = current;
-      }
+      
+      // HAPUS FIX LAMA — biar DOMContentLoaded yang handle restore & auto reset
+      // if (!current && summary.modal_awal > 0) { ... }
+      
       var pulse = document.getElementById("shift-pulse");
       var text = document.getElementById("shift-text");
       var navShift = document.getElementById("nav-shift-status");
