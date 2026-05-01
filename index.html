@@ -1703,7 +1703,7 @@
       document.getElementById("tarik-total").textContent = fmt(total);
     });
 
-    /* ===== INIT ===== */
+        /* ===== INIT ===== */
     document.addEventListener("DOMContentLoaded", function() {
       // Auth check — redirect ke login kalau belum login
       auth.onAuthStateChanged(function(user) {
@@ -1749,9 +1749,10 @@
             console.log("Shift restore:", err);
             renderDashboard();
           });
-      });
+        }); // <-- tutup db.ref("users/")
+      }); // <-- tutup auth.onAuthStateChanged
 
-      // Theme
+      // Theme (di luar auth callback)
       var theme = window.settingService.getTheme();
       window.settingService.applyTheme(theme);
       if (window.settingService.getDarkMode()) {
@@ -1778,7 +1779,8 @@
         renderDashboard();
         addNotif("🧾 Transaksi baru berhasil tercatat");
       });
-    });
+    }); // <-- tutup DOMContentLoaded
+      
   </script>
 </body>
 </html>
