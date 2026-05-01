@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0ea5e9">
-  <title>Login — WebPOS</title>
+  <title>Login — KasiRin</title>
 
   <link rel="stylesheet" href="css/themes.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -195,6 +195,11 @@
       display: block;
     }
 
+    .error-msg.success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
     .loading {
       display: inline-block;
       width: 16px;
@@ -244,8 +249,8 @@
       <!-- Form Login -->
       <form class="login-form active" id="form-login" onsubmit="return doLogin(event)">
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="login-email" placeholder="kasir@toko.com" required>
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="login-username" placeholder="kasir01" required>
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
@@ -263,8 +268,8 @@
           <input type="text" class="form-input" id="reg-name" placeholder="Nama Kasir" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="reg-email" placeholder="kasir@toko.com" required>
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="reg-username" placeholder="kasir01" required>
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
@@ -298,6 +303,11 @@
   <script src="js/core/firebase-config.js"></script>
 
   <script>
+    // Helper: username → fake email
+    function u2e(username) {
+      return username.toLowerCase().trim() + "@webpos.local";
+    }
+
     function switchTab(tab) {
       document.getElementById("form-login").classList.toggle("active", tab === "login");
       document.getElementById("form-register").classList.toggle("active", tab === "register");
@@ -306,10 +316,12 @@
       document.getElementById("error-msg").classList.remove("show");
     }
 
-    function showError(msg) {
+    function showError(msg, isSuccess) {
       var el = document.getElementById("error-msg");
       el.textContent = msg;
       el.classList.add("show");
+      if (isSuccess) el.classList.add("success");
+      else el.classList.remove("success");
     }
 
     function setLoading(btnId, textId, isLoading) {
@@ -323,8 +335,9 @@
       e.preventDefault();
       setLoading("btn-login", "login-text", true);
 
-      var email = document.getElementById("login-email").value;
+      var username = document.getElementById("login-username").value.trim();
       var password = document.getElementById("login-password").value;
+      var email = u2e(username);
 
       auth.signInWithEmailAndPassword(email, password)
         .then(function(cred) {
@@ -336,15 +349,19 @@
             localStorage.setItem("webpos_session_v3", JSON.stringify({
               id: auth.currentUser.uid,
               name: userData.name,
+              username: userData.username || username,
               role: userData.role,
-              email: userData.email
+              email: userData.email || email
             }));
           }
           window.location.href = "index.html";
         })
         .catch(function(err) {
           setLoading("btn-login", "login-text", false);
-          showError("Login gagal: " + err.message);
+          var msg = err.message;
+          if (msg.indexOf("user-not-found") !== -1) msg = "Username tidak ditemukan";
+          if (msg.indexOf("wrong-password") !== -1) msg = "Password salah";
+          showError("Login gagal: " + msg);
         });
 
       return false;
@@ -354,15 +371,24 @@
       e.preventDefault();
       setLoading("btn-register", "register-text", true);
 
-      var name = document.getElementById("reg-name").value;
-      var email = document.getElementById("reg-email").value;
+      var name = document.getElementById("reg-name").value.trim();
+      var username = document.getElementById("reg-username").value.trim().toLowerCase();
       var password = document.getElementById("reg-password").value;
       var role = document.getElementById("reg-role").value;
+      var email = u2e(username);
 
-      auth.createUserWithEmailAndPassword(email, password)
+      // Cek username sudah dipakai belum
+      db.ref("users").orderByChild("username").equalTo(username).once("value")
+        .then(function(snap) {
+          if (snap.val()) {
+            throw new Error("Username sudah dipakai");
+          }
+          return auth.createUserWithEmailAndPassword(email, password);
+        })
         .then(function(cred) {
           return db.ref("users/" + cred.user.uid).set({
             name: name,
+            username: username,
             email: email,
             role: role,
             createdAt: new Date().toISOString()
@@ -370,7 +396,7 @@
         })
         .then(function() {
           setLoading("btn-register", "register-text", false);
-          showError("✅ Akun berhasil dibuat! Silakan masuk.");
+          showError("✅ Akun berhasil dibuat! Silakan masuk.", true);
           switchTab("login");
         })
         .catch(function(err) {
