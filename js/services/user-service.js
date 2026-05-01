@@ -1,6 +1,7 @@
 /**
  * USER SERVICE
  * Firebase Auth + Realtime Database untuk data user.
+ * Login pakai username (di belakang: username@webpos.local)
  */
 class UserService {
   constructor() {
@@ -36,6 +37,7 @@ class UserService {
         self.currentUser = {
           id: uid,
           name: data.name || "Kasir",
+          username: data.username || "",
           role: data.role || "Kasir",
           email: data.email || ""
         };
@@ -54,6 +56,7 @@ class UserService {
           self.allUsers.push({
             id: uid,
             name: data[uid].name || "User",
+            username: data[uid].username || "",
             role: data[uid].role || "Kasir",
             email: data[uid].email || ""
           });
@@ -62,19 +65,37 @@ class UserService {
     });
   }
 
-  async register(email, password, name, role) {
+  // Login pakai username
+  async loginByUsername(username, password) {
+    var email = username.toLowerCase().trim() + "@webpos.local";
+    var cred = await auth.signInWithEmailAndPassword(email, password);
+    var snap = await db.ref("users/" + cred.user.uid).once("value");
+    var data = snap.val();
+    if (data) {
+      this.currentUser = {
+        id: cred.user.uid,
+        name: data.name,
+        username: data.username || username,
+        role: data.role,
+        email: data.email
+      };
+      localStorage.setItem("webpos_session_v3", JSON.stringify(this.currentUser));
+    }
+    return this.currentUser;
+  }
+
+  // Register pakai username
+  async registerByUsername(name, username, password, role) {
+    var email = username.toLowerCase().trim() + "@webpos.local";
     var cred = await auth.createUserWithEmailAndPassword(email, password);
     await db.ref("users/" + cred.user.uid).set({
       name: name,
-      role: role || "Kasir",
+      username: username.toLowerCase().trim(),
       email: email,
+      role: role || "Kasir",
       createdAt: new Date().toISOString()
     });
     return cred.user.uid;
-  }
-
-  async login(email, password) {
-    await auth.signInWithEmailAndPassword(email, password);
   }
 
   logout() {
@@ -84,7 +105,7 @@ class UserService {
   }
 
   getCurrent() {
-    return this.currentUser || { name: "Guest", role: "Kasir", id: "guest" };
+    return this.currentUser || { name: "Guest", role: "Kasir", id: "guest", username: "" };
   }
 
   async getAll() {
