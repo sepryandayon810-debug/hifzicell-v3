@@ -1770,20 +1770,24 @@
         document.getElementById("btn-theme").textContent = "☀️";
       }
 
-      // Transfer dropdown
-      window.userService.getAll().then(function(users) {
+            // Transfer dropdown — fetch langsung dari Firebase (aman, tidak depend allUsers)
+      db.ref("users").once("value").then(function(snap) {
+        var users = snap.val() || {};
         var sel = document.getElementById("select-transfer-user");
         var current = window.userService.getCurrent();
-        for (var i = 0; i < users.length; i++) {
-          if (users[i].id !== current.id) {
+        sel.innerHTML = '<option value="">Pilih user tujuan...</option>';
+        
+        for (var uid in users) {
+          if (users.hasOwnProperty(uid) && uid !== current.id) {
+            var u = users[uid];
             var opt = document.createElement("option");
-            opt.value = users[i].id;
-            opt.textContent = users[i].name + " (" + users[i].role + ")";
+            opt.value = uid;
+            opt.textContent = (u.name || u.username || "User") + " (" + (u.role || "Kasir") + ")";
             sel.appendChild(opt);
           }
         }
       });
-
+      
       // Event listeners
       window.addEventListener("transaction:completed", function() {
         renderDashboard();
