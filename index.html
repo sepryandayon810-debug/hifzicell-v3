@@ -2,70 +2,713 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0066cc">
   <title>Dashboard - WebPOS</title>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  
   <link rel="stylesheet" href="css/themes.css">
+  
+  <style>
+    /* ===== ROOT & DARK MODE LAYER ===== */
+    :root {
+      --header-h: 56px;
+      --sidebar-w: 260px;
+    }
+    
+    body.dark-mode {
+      filter: invert(1) hue-rotate(180deg);
+    }
+    body.dark-mode img, body.dark-mode .theme-option {
+      filter: invert(1) hue-rotate(180deg);
+    }
+    
+    /* ===== LAYOUT ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-base);
+      background: var(--bg);
+      color: var(--text);
+      transition: var(--transition);
+      overflow-x: hidden;
+    }
+    
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* ===== HEADER ===== */
+    .top-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 1000;
+    }
+    .top-header .left, .top-header .right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--primary);
+    }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      position: relative;
+      font-size: 18px;
+    }
+    .icon-btn:hover { background: var(--primary-light); color: var(--primary); }
+    .badge {
+      position: absolute;
+      top: 2px; right: 2px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      top: var(--header-h); left: 0;
+      width: var(--sidebar-w);
+      height: calc(100vh - var(--header-h));
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 900;
+    }
+    .sidebar.hidden-mobile {
+      transform: translateX(-100%);
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 899;
+    }
+    .sidebar-overlay.active { display: block; }
+    
+    .nav-group { margin-bottom: 20px; }
+    .nav-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      padding-left: 12px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      margin-bottom: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      margin-top: var(--header-h);
+      padding: 24px;
+      max-width: 1200px;
+    }
+    
+    /* ===== STAT CARDS ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .stat-card .value.success { color: var(--success); }
+    .stat-card .value.danger { color: var(--danger); }
+    
+    /* ===== CARDS ===== */
+    .card-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    /* ===== CASH DETAIL ===== */
+    .cash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .cash-item {
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .cash-item .key { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .cash-item .val { font-size: 16px; font-weight: 700; }
+    
+    /* ===== QUICK ACTIONS ===== */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-family: inherit;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      border-color: var(--primary);
+    }
+    .action-btn .icon { font-size: 28px; }
+    .action-btn .text { font-size: 13px; font-weight: 600; }
+    
+    /* ===== MODULE SHORTCUTS ===== */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .module-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px;
+      background: var(--primary-light);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .module-btn:hover { background: var(--primary); color: #fff; }
+    
+    /* ===== MODALS ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: var(--transition);
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .form-input:focus { outline: none; border-color: var(--primary); }
+    .form-hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    
+    /* ===== NOTIFICATION PANEL ===== */
+    .notif-panel {
+      display: none;
+      position: absolute;
+      top: 48px; right: 0;
+      width: 320px;
+      max-height: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 1100;
+      overflow: hidden;
+    }
+    .notif-panel.active { display: block; }
+    .notif-list { max-height: 340px; overflow-y: auto; }
+    .notif-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .notif-item.empty { color: var(--text-secondary); text-align: center; padding: 24px; }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .main-content { margin-left: 0; padding: 16px; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.show-mobile { transform: translateX(0); }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .actions-grid { grid-template-columns: repeat(2, 1fr); }
+      .module-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* ===== SHIFT STATUS ===== */
+    .shift-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .shift-badge.closed { background: var(--danger); color: #fff; }
+  </style>
 </head>
 <body class="theme-ocean">
-  
-  <div style="display: flex; min-height: 100vh;">
-    <!-- Sidebar -->
-    <nav class="sidebar" style="width: 250px; padding: 20px;">
-      <h2 class="text-primary" style="margin-bottom: 30px;">WebPOS</h2>
-      <a href="index.html" class="active" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">📊 Dashboard</a>
-      <a href="page-kasir.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">🛒 Kasir</a>
-      <a href="page-setting.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">⚙️ Pengaturan</a>
-    </nav>
 
-    <!-- Main Content -->
-    <main style="flex: 1; padding: 30px;">
-      <h1 style="margin-bottom: 24px;">Dashboard</h1>
+  <!-- Header -->
+  <header class="top-header">
+    <div class="left">
+      <button class="icon-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <span class="brand">WebPOS</span>
+    </div>
+    <div class="right">
+      <button class="icon-btn" onclick="toggleNotif()" aria-label="Notifikasi">
+        🔔
+        <span class="badge" id="notif-badge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" onclick="toggleDarkMode()" aria-label="Tema" id="btn-theme">🌙</button>
+      <button class="icon-btn" onclick="toggleProfile()" aria-label="Profil">👤</button>
       
-      <!-- Summary Cards -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div class="card" style="padding: 20px;">
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">MODAL AWAL</div>
-          <div class="text-primary" style="font-size: 24px; font-weight: 700;" id="card-modal">Rp 0</div>
+      <!-- Notification Dropdown -->
+      <div class="notif-panel" id="notif-panel">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700;">
+          Notifikasi
         </div>
-        <div class="card" style="padding: 20px;">
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">TOTAL TRANSAKSI</div>
-          <div class="text-primary" style="font-size: 24px; font-weight: 700;" id="card-transaksi">0</div>
+        <div class="notif-list" id="notif-list">
+          <div class="notif-item empty">Tidak ada notifikasi</div>
         </div>
-        <div class="card" style="padding: 20px;">
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">TOTAL LABA</div>
-          <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="card-laba">Rp 0</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar hidden-mobile" id="sidebar">
+      <div class="nav-group">
+        <div class="nav-label">Menu Utama</div>
+        <a href="index.html" class="nav-item active">📊 Dashboard</a>
+        <a href="page-kasir.html" class="nav-item">🛒 Kasir</a>
+        <a href="page-produk.html" class="nav-item">📦 Produk</a>
+        <a href="page-pembelian.html" class="nav-item">📥 Pembelian</a>
+      </div>
+      
+      <div class="nav-group">
+        <div class="nav-label">Keuangan</div>
+        <a href="page-hutang.html" class="nav-item">💳 Hutang/Piutang</a>
+        <a href="page-laporan.html" class="nav-item">📈 Laporan</a>
+        <a href="page-kas-management.html" class="nav-item">💰 Manajemen Kas</a>
+      </div>
+      
+      <div class="nav-group">
+        <div class="nav-label">Sistem</div>
+        <a href="page-setting.html" class="nav-item">⚙️ Pengaturan</a>
+        <button class="nav-item" onclick="logout()">🚪 Logout</button>
+      </div>
+      
+      <div style="margin-top: 24px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
+        <div id="user-role-display">Role: Kasir</div>
+        <div id="shift-status-display" style="margin-top: 4px;">Shift: Tutup</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      
+      <!-- Welcome -->
+      <div style="margin-bottom: 20px;">
+        <h1 style="font-size: 22px; margin-bottom: 4px;">Dashboard</h1>
+        <p style="color: var(--text-secondary); font-size: 14px;" id="greeting-text">Selamat datang kembali</p>
+      </div>
+
+      <!-- Shift Info Bar -->
+      <div class="card-section" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">Status Shift</div>
+          <div class="shift-badge" id="shift-badge">🚫 Shift Tutup</div>
         </div>
-        <div class="card" style="padding: 20px;">
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">PIUTANG</div>
-          <div style="font-size: 24px; font-weight: 700; color: var(--danger);" id="card-piutang">Rp 0</div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" onclick="openModal('modal-shift-open')">📂 Buka Shift</button>
+          <button class="btn btn-danger" onclick="openModal('modal-shift-close')">🔒 Tutup Shift</button>
+          <button class="btn btn-secondary" onclick="openModal('modal-transfer')" id="btn-transfer" style="display:none;">🔀 Transfer</button>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Modal Awal</div>
+          <div class="value" id="stat-modal">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total Transaksi</div>
+          <div class="value" id="stat-transaksi">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total Laba</div>
+          <div class="value success" id="stat-laba">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Piutang Customer</div>
+          <div class="value danger" id="stat-piutang">Rp 0</div>
         </div>
       </div>
 
       <!-- Cash Calculation -->
-      <div class="card" style="padding: 24px; margin-bottom: 30px;">
-        <h3 style="margin-bottom: 16px;">Perhitungan Kas Hari Ini</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-          <div><strong>Modal Awal:</strong> <span id="kas-modal">Rp 0</span></div>
-          <div><strong>Uang Masuk:</strong> <span id="kas-masuk">Rp 0</span></div>
-          <div><strong>Uang Keluar:</strong> <span id="kas-keluar">Rp 0</span></div>
-          <div><strong>Penjualan:</strong> <span id="kas-penjualan">Rp 0</span></div>
-          <div><strong>Top Up:</strong> <span id="kas-topup">Rp 0</span></div>
-          <div><strong>Tarik Tunai:</strong> <span id="kas-tarik">Rp 0</span></div>
-          <div><strong>Piutang:</strong> <span id="kas-piutang">Rp 0</span></div>
+      <div class="card-section">
+        <div class="section-title">
+          <span>Perhitungan Kas Hari Ini</span>
+          <span style="font-size: 12px; color: var(--text-secondary);" id="last-update">--:--</span>
+        </div>
+        <div class="cash-grid">
+          <div class="cash-item"><div class="key">Modal Awal</div><div class="val" id="cash-modal">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Uang Masuk</div><div class="val" id="cash-masuk">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Uang Keluar</div><div class="val" id="cash-keluar">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Penjualan</div><div class="val" id="cash-penjualan">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Top Up</div><div class="val" id="cash-topup">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Tarik Tunai</div><div class="val" id="cash-tarik">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Admin Fee</div><div class="val" id="cash-fee">Rp 0</div></div>
+          <div class="cash-item"><div class="key">Piutang</div><div class="val" id="cash-piutang">Rp 0</div></div>
         </div>
       </div>
 
-      <!-- Quick Actions (Navigasi saja, tidak ada logic) -->
-      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-        <button class="btn-primary" onclick="location.href='page-kasir.html'">🛒 Kasir</button>
-        <button class="btn-primary" onclick="window.cashService.openShift(prompt('Modal awal:')||0); renderDashboard();" style="background: var(--success);">📂 Buka Shift</button>
-        <button class="btn-primary" onclick="const s=window.cashService.closingShift(); alert('Shift ditutup. Total: Rp '+s.penjualan_produk);" style="background: var(--danger);">🔒 Closing Shift</button>
+      <!-- Quick Actions -->
+      <div class="card-section">
+        <div class="section-title">Aksi Cepat</div>
+        <div class="actions-grid">
+          <a href="page-kasir.html" class="action-btn">
+            <span class="icon">🛒</span>
+            <span class="text">Kasir</span>
+          </a>
+          <button class="action-btn" onclick="openModal('modal-set-modal')">
+            <span class="icon">💵</span>
+            <span class="text">Set Modal</span>
+          </button>
+          <button class="action-btn" onclick="openModal('modal-kas-masuk')">
+            <span class="icon">📥</span>
+            <span class="text">Kas Masuk</span>
+          </button>
+          <button class="action-btn" onclick="openModal('modal-kas-keluar')">
+            <span class="icon">📤</span>
+            <span class="text">Kas Keluar</span>
+          </button>
+          <button class="action-btn" onclick="openModal('modal-topup')">
+            <span class="icon">➕</span>
+            <span class="text">Top Up</span>
+          </button>
+          <button class="action-btn" onclick="openModal('modal-tarik')">
+            <span class="icon">➖</span>
+            <span class="text">Tarik Tunai</span>
+          </button>
+          <a href="page-laporan.html" class="action-btn">
+            <span class="icon">📈</span>
+            <span class="text">Laporan</span>
+          </a>
+          <button class="action-btn" onclick="openModal('modal-transfer')">
+            <span class="icon">🔀</span>
+            <span class="text">Transfer Shift</span>
+          </button>
+        </div>
       </div>
+
+      <!-- Module Shortcuts -->
+      <div class="card-section">
+        <div class="section-title">Modul Operasional</div>
+        <div class="module-grid">
+          <a href="page-kasir.html" class="module-btn">🛒 Kasir</a>
+          <a href="page-produk.html" class="module-btn">📦 Produk</a>
+          <a href="page-pembelian.html" class="module-btn">📥 Pembelian</a>
+          <a href="page-hutang.html" class="module-btn">💳 Hutang</a>
+          <a href="page-laporan.html" class="module-btn">📈 Laporan</a>
+          <a href="page-setting.html" class="module-btn">⚙️ Setting</a>
+        </div>
+      </div>
+
     </main>
+  </div>
+
+  <!-- ========== MODALS ========== -->
+
+  <!-- Modal: Buka Shift -->
+  <div class="modal-overlay" id="modal-shift-open">
+    <div class="modal-box">
+      <div class="modal-header"><h3>📂 Buka Shift</h3><button class="icon-btn" onclick="closeModal('modal-shift-open')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Modal Awal (Rp)</label>
+          <input type="number" class="form-input" id="input-modal-awal" placeholder="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-shift-open')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmOpenShift()">Konfirmasi Buka</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tutup Shift -->
+  <div class="modal-overlay" id="modal-shift-close">
+    <div class="modal-box">
+      <div class="modal-header"><h3>🔒 Tutup Shift</h3><button class="icon-btn" onclick="closeModal('modal-shift-close')">✕</button></div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px;">Yakin ingin menutup shift saat ini?</p>
+        <div class="cash-grid" id="summary-shift-close"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-shift-close')">Batal</button>
+        <button class="btn btn-danger" onclick="confirmCloseShift()">Konfirmasi Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Transfer Shift -->
+  <div class="modal-overlay" id="modal-transfer">
+    <div class="modal-box">
+      <div class="modal-header"><h3>🔀 Transfer Shift</h3><button class="icon-btn" onclick="closeModal('modal-transfer')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Pilih User Tujuan</label>
+          <select class="form-input" id="select-transfer-user"></select>
+        </div>
+        <div class="form-hint">Sisa kas saat ini akan menjadi modal awal shift user tujuan.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-transfer')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmTransfer()">Transfer Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Set Modal -->
+  <div class="modal-overlay" id="modal-set-modal">
+    <div class="modal-box">
+      <div class="modal-header"><h3>💵 Set Modal Awal</h3><button class="icon-btn" onclick="closeModal('modal-set-modal')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nominal Modal (Rp)</label>
+          <input type="number" class="form-input" id="input-set-modal" placeholder="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-set-modal')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmSetModal()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Kas Masuk -->
+  <div class="modal-overlay" id="modal-kas-masuk">
+    <div class="modal-box">
+      <div class="modal-header"><h3>📥 Kas Masuk</h3><button class="icon-btn" onclick="closeModal('modal-kas-masuk')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-input" id="input-kas-masuk" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-input" id="input-kas-masuk-note" placeholder="Contoh: Modal tambahan">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-kas-masuk')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmKasMasuk()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Kas Keluar -->
+  <div class="modal-overlay" id="modal-kas-keluar">
+    <div class="modal-box">
+      <div class="modal-header"><h3>📤 Kas Keluar</h3><button class="icon-btn" onclick="closeModal('modal-kas-keluar')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Jumlah (Rp)</label>
+          <input type="number" class="form-input" id="input-kas-keluar" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan</label>
+          <input type="text" class="form-input" id="input-kas-keluar-note" placeholder="Contoh: Beli perlengkapan">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-kas-keluar')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmKasKeluar()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Top Up -->
+  <div class="modal-overlay" id="modal-topup">
+    <div class="modal-box">
+      <div class="modal-header"><h3>➕ Top Up</h3><button class="icon-btn" onclick="closeModal('modal-topup')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Jumlah Top Up (Rp)</label>
+          <input type="number" class="form-input" id="input-topup" placeholder="0">
+          <div class="form-hint">Admin fee: <span id="topup-fee-display">0</span>. Net masuk kas: <span id="topup-net">0</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-topup')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmTopUp()">Konfirmasi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tarik Tunai -->
+  <div class="modal-overlay" id="modal-tarik">
+    <div class="modal-box">
+      <div class="modal-header"><h3>➖ Tarik Tunai</h3><button class="icon-btn" onclick="closeModal('modal-tarik')">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Jumlah Tarik (Rp)</label>
+          <input type="number" class="form-input" id="input-tarik" placeholder="0">
+          <div class="form-hint">Admin fee: <span id="tarik-fee-display">0</span>. Total dari kas: <span id="tarik-total">0</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-tarik')">Batal</button>
+        <button class="btn btn-primary" onclick="confirmTarik()">Konfirmasi</button>
+      </div>
+    </div>
   </div>
 
   <!-- Services -->
   <script src="js/services/setting-service.js"></script>
+  <script src="js/services/user-service.js"></script>
   <script src="js/services/transaction-service.js"></script>
   <script src="js/services/cash-service.js"></script>
   <script src="js/services/debt-service.js"></script>
@@ -73,31 +716,244 @@
   <script src="js/app.js"></script>
 
   <script>
+    /* ===== UI HELPERS ===== */
     function formatRupiah(num) {
-      return 'Rp ' + Number(num).toLocaleString('id-ID');
+      return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
     }
-
+    
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    
+    /* ===== SIDEBAR ===== */
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const ov = document.getElementById('sidebar-overlay');
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        sb.classList.toggle('show-mobile');
+        ov.classList.toggle('active');
+      } else {
+        sb.classList.toggle('hidden-mobile');
+      }
+    }
+    
+    /* ===== NOTIF ===== */
+    function toggleNotif() {
+      document.getElementById('notif-panel').classList.toggle('active');
+    }
+    function addNotif(text) {
+      const list = document.getElementById('notif-list');
+      const badge = document.getElementById('notif-badge');
+      if (list.querySelector('.empty')) list.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'notif-item';
+      div.textContent = new Date().toLocaleTimeString('id-ID') + ' — ' + text;
+      list.prepend(div);
+      badge.style.display = 'flex';
+      badge.textContent = list.children.length;
+    }
+    
+    /* ===== THEME / DARK MODE ===== */
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      window.settingService.setDarkMode(isDark);
+      document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
+    }
+    
+    /* ===== PROFILE ===== */
+    function toggleProfile() {
+      const user = window.userService.getCurrent();
+      alert(`User: ${user.name}\nRole: ${user.role}`);
+    }
+    function logout() {
+      if (confirm('Yakin logout?')) {
+        window.userService.logout();
+        location.reload();
+      }
+    }
+    
+    /* ===== RENDER DASHBOARD (READ ONLY) ===== */
     function renderDashboard() {
-      // READ ONLY: ambil dari service, tidak hitung manual
+      // 1. Summary dari cash_service (read only)
       const summary = window.cashService.getDailySummary();
-
-      document.getElementById('card-modal').textContent = formatRupiah(summary.modal_awal);
-      document.getElementById('card-transaksi').textContent = summary.total_transaksi;
-      document.getElementById('card-laba').textContent = formatRupiah(summary.total_laba);
-      document.getElementById('card-piutang').textContent = formatRupiah(summary.piutang_customer);
-
-      document.getElementById('kas-modal').textContent = formatRupiah(summary.modal_awal);
-      document.getElementById('kas-masuk').textContent = formatRupiah(summary.uang_masuk);
-      document.getElementById('kas-keluar').textContent = formatRupiah(summary.uang_keluar);
-      document.getElementById('kas-penjualan').textContent = formatRupiah(summary.penjualan_produk);
-      document.getElementById('kas-topup').textContent = formatRupiah(summary.topup);
-      document.getElementById('kas-tarik').textContent = formatRupiah(summary.tarik_tunai);
-      document.getElementById('kas-piutang').textContent = formatRupiah(summary.piutang_customer);
+      
+      document.getElementById('stat-modal').textContent = formatRupiah(summary.modal_awal);
+      document.getElementById('stat-transaksi').textContent = summary.total_transaksi;
+      document.getElementById('stat-laba').textContent = formatRupiah(summary.total_laba);
+      document.getElementById('stat-piutang').textContent = formatRupiah(summary.piutang_customer);
+      
+      document.getElementById('cash-modal').textContent = formatRupiah(summary.modal_awal);
+      document.getElementById('cash-masuk').textContent = formatRupiah(summary.uang_masuk);
+      document.getElementById('cash-keluar').textContent = formatRupiah(summary.uang_keluar);
+      document.getElementById('cash-penjualan').textContent = formatRupiah(summary.penjualan_produk);
+      document.getElementById('cash-topup').textContent = formatRupiah(summary.topup);
+      document.getElementById('cash-tarik').textContent = formatRupiah(summary.tarik_tunai);
+      document.getElementById('cash-fee').textContent = formatRupiah(summary.total_admin_fee);
+      document.getElementById('cash-piutang').textContent = formatRupiah(summary.piutang_customer);
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString('id-ID');
+      
+      // 2. Shift Status
+      const current = window.cashService.getCurrentShift();
+      const badge = document.getElementById('shift-badge');
+      if (current) {
+        badge.innerHTML = `✅ Shift Aktif — ${current.kasir}`;
+        badge.classList.remove('closed');
+      } else {
+        badge.innerHTML = `🚫 Shift Tutup`;
+        badge.classList.add('closed');
+      }
+      
+      // 3. Role & Transfer visibility
+      const user = window.userService.getCurrent();
+      document.getElementById('user-role-display').textContent = `Role: ${user.role}`;
+      document.getElementById('shift-status-display').textContent = current ? `Shift: ${current.kasir}` : 'Shift: Tutup';
+      
+      if (['Owner','Admin'].includes(user.role)) {
+        document.getElementById('btn-transfer').style.display = 'inline-flex';
+      }
     }
-
-    // Render saat load & ketika transaksi selesai
-    renderDashboard();
-    window.addEventListener('transaction:completed', renderDashboard);
+    
+    /* ===== ACTIONS: SHIFT ===== */
+    function confirmOpenShift() {
+      const val = parseFloat(document.getElementById('input-modal-awal').value) || 0;
+      const user = window.userService.getCurrent();
+      window.cashService.openShift(val, user.name);
+      addNotif(`Shift dibuka oleh ${user.name} dengan modal ${formatRupiah(val)}`);
+      closeModal('modal-shift-open');
+      renderDashboard();
+    }
+    
+    function confirmCloseShift() {
+      const shift = window.cashService.closingShift();
+      addNotif(`Shift ditutup. Penjualan: ${formatRupiah(shift.penjualan_produk)}`);
+      closeModal('modal-shift-close');
+      renderDashboard();
+    }
+    
+    function confirmTransfer() {
+      const targetId = document.getElementById('select-transfer-user').value;
+      if (!targetId) return alert('Pilih user tujuan');
+      const result = window.cashService.transferShift(targetId, window.userService);
+      if (result.success) {
+        addNotif(`Shift ditransfer ke ${result.targetName}`);
+        closeModal('modal-transfer');
+        renderDashboard();
+      } else {
+        alert(result.error);
+      }
+    }
+    
+    /* ===== ACTIONS: KAS ===== */
+    function confirmSetModal() {
+      const val = parseFloat(document.getElementById('input-set-modal').value) || 0;
+      window.cashService.setModalAwal(val);
+      addNotif(`Modal awal diperbarui: ${formatRupiah(val)}`);
+      closeModal('modal-set-modal');
+      renderDashboard();
+    }
+    
+    function confirmKasMasuk() {
+      const val = parseFloat(document.getElementById('input-kas-masuk').value) || 0;
+      const note = document.getElementById('input-kas-masuk-note').value;
+      window.cashService.addCash(val, note);
+      addNotif(`Kas masuk ${formatRupiah(val)}`);
+      closeModal('modal-kas-masuk');
+      renderDashboard();
+    }
+    
+    function confirmKasKeluar() {
+      const val = parseFloat(document.getElementById('input-kas-keluar').value) || 0;
+      const note = document.getElementById('input-kas-keluar-note').value;
+      window.cashService.reduceCash(val, note);
+      addNotif(`Kas keluar ${formatRupiah(val)}`);
+      closeModal('modal-kas-keluar');
+      renderDashboard();
+    }
+    
+    /* ===== ACTIONS: TOPUP / TARIK (with Admin Fee) ===== */
+    function confirmTopUp() {
+      const val = parseFloat(document.getElementById('input-topup').value) || 0;
+      const result = window.cashService.topUp(val);
+      if (result.success) {
+        addNotif(`Top up ${formatRupiah(result.amount)} (fee ${formatRupiah(result.fee)})`);
+        closeModal('modal-topup');
+        renderDashboard();
+      } else {
+        alert(result.error);
+      }
+    }
+    
+    function confirmTarik() {
+      const val = parseFloat(document.getElementById('input-tarik').value) || 0;
+      const result = window.cashService.tarikTunai(val);
+      if (result.success) {
+        addNotif(`Tarik tunai ${formatRupiah(result.received)} (fee ${formatRupiah(result.fee)})`);
+        closeModal('modal-tarik');
+        renderDashboard();
+      } else {
+        alert(result.error);
+      }
+    }
+    
+    // Live fee preview
+    document.getElementById('input-topup').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      const feeCfg = window.settingService.getAdminFee();
+      const fee = Math.floor(val * feeCfg.topup_percent / 100) + feeCfg.topup_flat;
+      const net = val - fee;
+      document.getElementById('topup-fee-display').textContent = formatRupiah(fee);
+      document.getElementById('topup-net').textContent = formatRupiah(net);
+    });
+    document.getElementById('input-tarik').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      const feeCfg = window.settingService.getAdminFee();
+      const fee = Math.floor(val * feeCfg.tarik_percent / 100) + feeCfg.tarik_flat;
+      const total = val + fee;
+      document.getElementById('tarik-fee-display').textContent = formatRupiah(fee);
+      document.getElementById('tarik-total').textContent = formatRupiah(total);
+    });
+    
+    /* ===== INIT ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Apply tema & dark mode dari setting
+      const theme = window.settingService.getTheme();
+      window.settingService.applyTheme(theme);
+      if (window.settingService.getDarkMode()) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('btn-theme').textContent = '☀️';
+      }
+      
+      // Isi dropdown transfer
+      const users = window.userService.getAll().filter(u => u.id !== window.userService.getCurrent().id);
+      const sel = document.getElementById('select-transfer-user');
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.name} (${u.role})`;
+        sel.appendChild(opt);
+      });
+      
+      // Render
+      renderDashboard();
+      
+      // Listen perubahan data
+      window.addEventListener('transaction:completed', () => {
+        renderDashboard();
+        addNotif('Transaksi baru tercatat');
+      });
+      
+      // Greeting
+      const hour = new Date().getHours();
+      let greet = 'Selamat malam';
+      if (hour < 11) greet = 'Selamat pagi';
+      else if (hour < 15) greet = 'Selamat siang';
+      else if (hour < 18) greet = 'Selamat sore';
+      document.getElementById('greeting-text').textContent = greet + ', ' + (window.userService.getCurrent().name || 'Kasir');
+    });
   </script>
 </body>
 </html>
