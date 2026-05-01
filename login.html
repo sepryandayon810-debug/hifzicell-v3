@@ -365,7 +365,7 @@
       return false;
     }
 
-    function doRegister(e) {
+        function doRegister(e) {
       e.preventDefault();
       setLoading("btn-register", "register-text", true);
 
@@ -377,6 +377,8 @@
 
       auth.createUserWithEmailAndPassword(email, password)
         .then(function(cred) {
+          console.log("[Register] Auth success, UID:", cred.user.uid);
+          // Write ke Realtime Database
           return db.ref("users/" + cred.user.uid).set({
             name: name,
             username: username,
@@ -386,22 +388,23 @@
           });
         })
         .then(function() {
+          console.log("[Register] DB write success");
           setLoading("btn-register", "register-text", false);
           showError("✅ Akun berhasil dibuat! Silakan masuk.", true);
           switchTab("login");
         })
         .catch(function(err) {
           setLoading("btn-register", "register-text", false);
-          var msg = err.message;
-          if (msg.indexOf("email-already-in-use") !== -1) {
-            msg = "Username sudah dipakai";
-          }
+          console.error("[Register] Error:", err);
+          var msg = err.message || "Unknown error";
+          if (msg.indexOf("email-already-in-use") !== -1) msg = "Username sudah dipakai";
+          if (msg.indexOf("PERMISSION_DENIED") !== -1) msg = "Database Rules melarang write ke /users. Periksa Rules Firebase!";
           showError("Daftar gagal: " + msg);
         });
 
       return false;
     }
-
+    
     auth.onAuthStateChanged(function(user) {
       if (user) {
         window.location.href = "index.html";
