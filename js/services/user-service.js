@@ -98,6 +98,15 @@ class UserService {
     return cred.user.uid;
   }
 
+    getById(uid) {
+    for (var i = 0; i < this.allUsers.length; i++) {
+      if (this.allUsers[i].id === uid) {
+        return this.allUsers[i];
+      }
+    }
+    return null;
+  }
+
   logout() {
     auth.signOut();
     localStorage.removeItem("webpos_session_v3");
