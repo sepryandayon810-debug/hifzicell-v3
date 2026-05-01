@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0ea5e9">
-  <title>Dashboard — POS</title>
+  <title>Dashboard — WebPOS</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -1056,6 +1056,19 @@
 </head>
 <body class="theme-ocean">
 
+  <!-- AUTH CHECK — Redirect ke login kalau belum login -->
+  <script>
+    (function() {
+      // Cek session localStorage dulu (lebih cepat)
+      var session = localStorage.getItem("webpos_session_v3");
+      if (!session) {
+        // Belum ada session, cek Firebase Auth (async)
+        // Tapi karena Firebase belum load, kita cek di DOMContentLoaded
+        window.__needAuthCheck = true;
+      }
+    })();
+  </script>
+
   <!-- HEADER -->
   <header class="header">
     <div class="header-brand">
@@ -1790,6 +1803,12 @@
 
     /* ===== INIT ===== */
     document.addEventListener("DOMContentLoaded", function() {
+      // Auth check — redirect ke login kalau belum login
+      if (window.__needAuthCheck && !auth.currentUser) {
+        window.location.href = "login.html";
+        return;
+      }
+
       // Theme
       var theme = window.settingService.getTheme();
       window.settingService.applyTheme(theme);
