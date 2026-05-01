@@ -7,50 +7,44 @@ class CashService {
     this.current = null;
     this.mutations = [];
 
-    // Listen shift aktif dari Firebase
-    db.ref("shifts").orderByChild("status").equalTo("open").on("value", function(snap) {
-      var data = snap.val() || {};
-      var open = [];
-      for (var key in data) {
-        if (data.hasOwnProperty(key)) {
-          open.push({ id: key, ...data[key] });
-        }
-      }
-      var uid = getUid ? getUid() : null;
-      var found = null;
-      for (var i = 0; i < open.length; i++) {
-        if (open[i].kasirId === uid) {
-          found = open[i];
-          break;
-        }
-      }
-      this.current = found || open[0] || null;
-    }.bind(this));
-
     // Listen kas mutations dari Firebase
+    var self = this;
     db.ref("kas_mutations").orderByChild("timestamp").limitToLast(200).on("value", function(snap) {
       var data = snap.val() || {};
-      this.mutations = [];
+      self.mutations = [];
       for (var key in data) {
         if (data.hasOwnProperty(key)) {
-          this.mutations.push({ id: key, ...data[key] });
+          self.mutations.push({ id: key, ...data[key] });
         }
       }
-    }.bind(this));
+    });
   }
 
-  async openShift(modal_awal, kasirName) {
+  _getUid() {
+    return (typeof getUid === "function") ? getUid() : null;
+  }
+
+  async openShift(modal_awal, kasirName, shiftDate) {
+    var uid = this._getUid() || "unknown";
     var shiftId = 'SHIFT-' + Date.now();
+    var today = shiftDate || new Date().toISOString().split('T')[0];
+
     var shift = {
       id: shiftId,
       modal_awal: modal_awal || 0,
       start: new Date().toISOString(),
       end: null,
-      kasirId: (getUid ? getUid() : null) || "unknown",
+      kasirId: uid,
       kasirName: kasirName || "Kasir",
-      status: "open"
+      status: "open",
+      shiftDate: today
     };
-    await db.ref('shifts/' + shiftId).set(shift);
+
+    // Simpan ke path yang bisa di-restore di index.html
+    await db.ref('shifts/' + uid + '/current').set(shift);
+    // Simpan juga ke history untuk arsip
+    await db.ref('shifts_history/' + shiftId).set(shift);
+
     this.current = shift;
     return shift;
   }
@@ -68,7 +62,7 @@ class CashService {
       fee: fee,
       timestamp: new Date().toISOString(),
       dateKey: new Date().toISOString().split("T")[0],
-      kasirId: (getUid ? getUid() : null) || "unknown"
+      kasirId: this._getUid() || "unknown"
     });
   }
 
@@ -80,18 +74,109 @@ class CashService {
     await this.addMutation("out", amount, note);
   }
 
-  async closingShift() {
-    if (!this.current) throw new Error("Tidak ada shift aktif");
+  async topUp(amount) {
+    if (!amount || amount <= 0) return { success: false, error: "Nominal tidak valid" };
+    var feeCfg = window.settingService ? window.settingService.getAdminFee() : { topup_percent: 0, topup_flat: 0 };
+    var fee = Math.floor(amount * (feeCfg.topup_percent || 0) / 100) + (feeCfg.topup_flat || 0);
+    var net = amount - fee;
+    await this.addMutation("topup", net, "Top Up", fee);
+    return { success: true, amount: net, fee: fee };
+  }
+
+  async tarikTunai(amount) {
+    if (!amount || amount <= 0) return { success: false, error: "Nominal tidak valid" };
+    var feeCfg = window.settingService ? window.settingService.getAdminFee() : { tarik_percent: 0, tarik_flat: 0 };
+    var fee = Math.floor(amount * (feeCfg.tarik_percent || 0) / 100) + (feeCfg.tarik_flat || 0);
+    var total = amount + fee;
+    await this.addMutation("tarik", amount, "Tarik Tunai", fee);
+    return { success: true, received: amount, fee: fee, total: total };
+  }
+
+  async setModalAwal(amount) {
+    if (!this.current) throw new Error("Shift belum dibuka");
+    this.current.modal_awal = amount || 0;
+    var uid = this._getUid() || "unknown";
+    await db.ref('shifts/' + uid + '/current/modal_awal').set(this.current.modal_awal);
+    return this.current;
+  }
+
+  async transferShift(targetId, userService) {
+    if (!this.current) return { success: false, error: "Shift belum dibuka" };
+    if (!targetId) return { success: false, error: "Pilih user tujuan" };
+
     var summary = this.getDailySummary();
+    var totalUang = (summary.modal_awal || 0)
+      + (summary.uang_masuk || 0)
+      - (summary.uang_keluar || 0)
+      + (summary.penjualan_produk || 0)
+      - (summary.piutang_customer || 0)
+      + (summary.topup || 0)
+      + (summary.total_admin_fee || 0)
+      - (summary.tarik_tunai || 0);
+
+    // Tutup shift lama
+    var uid = this._getUid() || "unknown";
     var shiftUpdate = {
       end: new Date().toISOString(),
       status: "closed",
-      summary: summary
+      summary: summary,
+      transferTo: targetId,
+      fisik_total: totalUang
     };
-    await db.ref('shifts/' + this.current.id).update(shiftUpdate);
+    await db.ref('shifts_history/' + this.current.id).update(shiftUpdate);
+    await db.ref('shifts/' + uid + '/current').remove();
+
+    // Buka shift baru untuk target
+    var targetUser = await userService.getById(targetId);
+    var targetName = targetUser ? (targetUser.name || targetUser.username) : "Kasir";
+    var today = new Date().toISOString().split('T')[0];
+    var newShift = {
+      id: 'SHIFT-' + Date.now(),
+      modal_awal: totalUang,
+      start: new Date().toISOString(),
+      end: null,
+      kasirId: targetId,
+      kasirName: targetName,
+      status: "open",
+      shiftDate: today,
+      transferredFrom: uid
+    };
+    await db.ref('shifts/' + targetId + '/current').set(newShift);
+
+    this.current = null;
+    return { success: true, targetName: targetName, modal: totalUang };
+  }
+
+  async closingShift(fisikTotal) {
+    if (!this.current) throw new Error("Tidak ada shift aktif");
+    var summary = this.getDailySummary();
+    var systemTotal = (summary.modal_awal || 0)
+      + (summary.uang_masuk || 0)
+      - (summary.uang_keluar || 0)
+      + (summary.penjualan_produk || 0)
+      - (summary.piutang_customer || 0)
+      + (summary.topup || 0)
+      + (summary.total_admin_fee || 0)
+      - (summary.tarik_tunai || 0);
+
+    var shiftUpdate = {
+      end: new Date().toISOString(),
+      status: "closed",
+      summary: summary,
+      fisik_total: fisikTotal || 0,
+      selisih: (fisikTotal || 0) - systemTotal
+    };
+
+    // Update history
+    await db.ref('shifts_history/' + this.current.id).update(shiftUpdate);
+    // Hapus current agar auto reset tidak ke-trigger lagi
+    var uid = this._getUid() || "unknown";
+    await db.ref('shifts/' + uid + '/current').remove();
+
     var result = { id: this.current.id };
     for (var key in shiftUpdate) { result[key] = shiftUpdate[key]; }
     for (var key in summary) { result[key] = summary[key]; }
+
     this.current = null;
     return result;
   }
@@ -109,8 +194,11 @@ class CashService {
     var todayMuts = [];
     for (var i = 0; i < this.mutations.length; i++) {
       var m = this.mutations[i];
-      if (m.dateKey === today && m.shiftId === shiftId) {
-        todayMuts.push(m);
+      // Kalau shift aktif, filter by shiftId. Kalau tidak, filter by hari ini saja.
+      if (m.dateKey === today) {
+        if (!shiftId || m.shiftId === shiftId) {
+          todayMuts.push(m);
+        }
       }
     }
 
