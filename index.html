@@ -901,34 +901,32 @@
     <aside class="sidebar" id="sidebar">
       <div class="nav-section">
         <div class="nav-section-title">Menu Utama</div>
-        <a href="index.html" class="nav-item active">
-          <span class="icon">📊</span>
+                <a href="index.html" class="nav-item active">
+          <span class="icon">📈</span>
           <span>Dashboard</span>
         </a>
         <a href="page-kasir.html" class="nav-item">
-          <span class="icon">🛒</span>
+          <span class="icon">🛍️</span>
           <span>Kasir</span>
         </a>
         <a href="page-produk.html" class="nav-item">
-          <span class="icon">📦</span>
+          <span class="icon">🎒</span>
           <span>Produk</span>
         </a>
         <a href="page-pembelian.html" class="nav-item">
-          <span class="icon">📥</span>
+          <span class="icon">🛒</span>
           <span>Pembelian</span>
         </a>
-      </div>
 
-      <div class="nav-section">
-        <div class="nav-section-title">Keuangan</div>
+              <a href="page-laporan.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Laporan</span>
+        </a>
         <a href="page-hutang.html" class="nav-item">
           <span class="icon">💳</span>
           <span>Hutang / Piutang</span>
         </a>
-        <a href="page-laporan.html" class="nav-item">
-          <span class="icon">📈</span>
-          <span>Laporan</span>
-        </a>
+        
         <a href="page-kas-management.html" class="nav-item">
           <span class="icon">💰</span>
           <span>Manajemen Kas</span>
@@ -1700,7 +1698,7 @@
       document.getElementById("tarik-total").textContent = fmt(total);
     });
 
-        /* ===== INIT ===== */
+            /* ===== INIT ===== */
     document.addEventListener("DOMContentLoaded", function() {
       // Auth check — redirect ke login kalau belum login
       auth.onAuthStateChanged(function(user) {
@@ -1736,7 +1734,6 @@
             greet + ", " + session.name + ". Siap melayani hari ini?";
 
           // Restore shift dari Firebase (fix hilang setelah refresh)
-                    // Restore shift dari Firebase (fix hilang setelah refresh)
           db.ref("shifts/" + user.uid + "/current").once("value").then(function(shiftSnap) {
             var shift = shiftSnap.val();
             if (shift && window.cashService) {
@@ -1759,6 +1756,31 @@
             console.log("Shift restore:", err);
             renderDashboard();
           });
+
+          // ===== TRANSFER DROPDOWN =====
+          // Fetch user list setelah auth & session confirmed
+          db.ref("users").once("value").then(function(userSnap) {
+            var users = userSnap.val() || {};
+            var sel = document.getElementById("select-transfer-user");
+            var currentId = session.id; // pakai session yang sudah dibuat di atas
+            sel.innerHTML = '<option value="">Pilih user tujuan...</option>';
+            
+            var count = 0;
+            for (var uid in users) {
+              if (users.hasOwnProperty(uid) && uid !== currentId) {
+                var u = users[uid];
+                var opt = document.createElement("option");
+                opt.value = uid;
+                opt.textContent = (u.name || u.username || "User") + " (" + (u.role || "Kasir") + ")";
+                sel.appendChild(opt);
+                count++;
+              }
+            }
+            console.log("[Transfer] Loaded", count, "users");
+          }).catch(function(err) {
+            console.error("[Transfer] Failed to load users:", err);
+          });
+
         }); // <-- tutup db.ref("users/")
       }); // <-- tutup auth.onAuthStateChanged
 
@@ -1770,24 +1792,6 @@
         document.getElementById("btn-theme").textContent = "☀️";
       }
 
-            // Transfer dropdown — fetch langsung dari Firebase (aman, tidak depend allUsers)
-      db.ref("users").once("value").then(function(snap) {
-        var users = snap.val() || {};
-        var sel = document.getElementById("select-transfer-user");
-        var current = window.userService.getCurrent();
-        sel.innerHTML = '<option value="">Pilih user tujuan...</option>';
-        
-        for (var uid in users) {
-          if (users.hasOwnProperty(uid) && uid !== current.id) {
-            var u = users[uid];
-            var opt = document.createElement("option");
-            opt.value = uid;
-            opt.textContent = (u.name || u.username || "User") + " (" + (u.role || "Kasir") + ")";
-            sel.appendChild(opt);
-          }
-        }
-      });
-      
       // Event listeners
       window.addEventListener("transaction:completed", function() {
         renderDashboard();
