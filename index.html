@@ -17,14 +17,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ============================================
-       APP SHELL
-       ============================================ */
     .app { display: flex; min-height: 100vh; }
 
-    /* ============================================
-       HEADER — Glassmorphism
-       ============================================ */
     .header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -110,9 +104,6 @@
       border: 2px solid var(--surface);
     }
 
-    /* ============================================
-       SIDEBAR
-       ============================================ */
     .sidebar {
       position: fixed;
       top: var(--header-h); left: 0;
@@ -215,9 +206,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* ============================================
-       MAIN CONTENT
-       ============================================ */
     .main {
       flex: 1;
       margin-left: var(--sidebar-w);
@@ -237,9 +225,6 @@
       font-size: 15px;
     }
 
-    /* ============================================
-       SHIFT STATUS BAR + TOGGLE SWITCH
-       ============================================ */
     .shift-bar {
       display: flex;
       align-items: center;
@@ -300,7 +285,6 @@
       word-break: break-word;
     }
 
-    /* Toggle Switch */
     .toggle-switch {
       position: relative;
       width: 52px;
@@ -359,9 +343,6 @@
     .toggle-switch input:checked ~ .toggle-label.off { opacity: 0; }
     .toggle-switch input:checked ~ .toggle-label.on { opacity: 1; }
 
-    /* ============================================
-       STATS GRID
-       ============================================ */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -430,9 +411,6 @@
       gap: 4px;
     }
 
-    /* ============================================
-       SECTION CARDS
-       ============================================ */
     .section-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -460,9 +438,6 @@
       font-weight: 500;
     }
 
-    /* ============================================
-       CASH GRID + TOTAL UANG
-       ============================================ */
     .cash-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -496,7 +471,6 @@
     .cash-item .cash-val.positive { color: var(--success); }
     .cash-item .cash-val.negative { color: var(--danger); }
 
-    /* Total Uang — Hero Card */
     .total-cash-hero {
       grid-column: 1 / -1;
       padding: var(--space-6) var(--space-8);
@@ -542,9 +516,6 @@
       line-height: 1.5;
     }
 
-    /* ============================================
-       QUICK ACTIONS — Bento Grid
-       ============================================ */
     .bento-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -602,9 +573,6 @@
       z-index: 1;
     }
 
-    /* ============================================
-       MODULE GRID — MODERN
-       ============================================ */
     .module-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -671,9 +639,6 @@
       font-weight: 700;
     }
 
-    /* ============================================
-       MODALS
-       ============================================ */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -739,9 +704,45 @@
       margin-top: var(--space-2);
     }
 
-    /* ============================================
-       NOTIFICATION PANEL
-       ============================================ */
+    /* ===== CLOSING SHIFT PECAHAN ===== */
+    .pecahan-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .pecahan-row:last-child { border-bottom: none; }
+    .pecahan-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 90px;
+    }
+    .pecahan-input {
+      width: 70px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .pecahan-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    }
+    .pecahan-subtotal {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 100px;
+      text-align: right;
+    }
+
     .notif-panel {
       display: none;
       position: absolute;
@@ -793,9 +794,6 @@
       font-size: 14px;
     }
 
-    /* ============================================
-       RESPONSIVE — MOBILE OPTIMIZED
-       ============================================ */
     @media (max-width: 1200px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .cash-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1106,11 +1104,11 @@
             <span class="bento-desc">Ambil uang dari kas</span>
           </button>
 
-          <a href="page-laporan.html" class="bento-item">
-            <div class="bento-icon">📈</div>
-            <span class="bento-label">Laporan</span>
-            <span class="bento-desc">Ringkasan penjualan</span>
-          </a>
+          <button class="bento-item" onclick="openClosingShift()">
+            <div class="bento-icon">🧮</div>
+            <span class="bento-label">Closing Shift</span>
+            <span class="bento-desc">Hitung & tutup shift</span>
+          </button>
 
           <button class="bento-item" onclick="openModal('modal-transfer')">
             <div class="bento-icon">🔀</div>
@@ -1157,6 +1155,35 @@
   </div>
 
   <!-- ========== MODALS ========== -->
+
+  <!-- Closing Shift — Kalkulator Pecahan -->
+  <div class="modal-overlay" id="modal-closing-shift">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3>🧮 Closing Shift</h3>
+        <button class="header-btn" onclick="closeModal('modal-closing-shift')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center; padding:12px 0; margin-bottom:16px; border-bottom:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; font-weight:600;">Total Uang di Sistem</div>
+          <div id="closing-system-total" style="font-size:28px; font-weight:800; color:var(--primary); margin-top:4px;">Rp 0</div>
+        </div>
+        <div id="closing-pecahan-list"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:var(--bg); border-radius:var(--radius-lg); margin-top:16px; border:1.5px solid var(--border);">
+          <span style="font-size:14px; font-weight:600; color:var(--text-secondary);">Total Fisik</span>
+          <span id="closing-fisik-total" style="font-size:20px; font-weight:800; color:var(--text);">Rp 0</span>
+        </div>
+        <div id="closing-selisih-row" style="display:none; justify-content:space-between; align-items:center; padding:12px 16px; border-radius:var(--radius-lg); margin-top:8px;">
+          <span style="font-size:13px; font-weight:600;">Selisih</span>
+          <span id="closing-selisih" style="font-size:18px; font-weight:800;">Rp 0</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-closing-shift')">Batal</button>
+        <button class="btn btn-danger" onclick="confirmClosingShift()">Tutup Shift Sekarang</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Buka Shift -->
   <div class="modal-overlay" id="modal-shift-open">
@@ -1330,7 +1357,7 @@
   <script src="js/services/printer-service.js"></script>
   <script src="js/app.js"></script>
 
-  <script>
+    <script>
     /* ===== UTILS ===== */
     function fmt(n) {
       return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -1456,6 +1483,14 @@
 
       // Shift status
       var current = window.cashService.current;
+      // FIX: kalau current hilang karena refresh, tapi summary punya modal > 0
+      if (!current && summary.modal_awal > 0) {
+        current = {
+          modal_awal: summary.modal_awal,
+          kasirName: window.userService.getCurrent().name || "Kasir"
+        };
+        window.cashService.current = current;
+      }
       var pulse = document.getElementById("shift-pulse");
       var text = document.getElementById("shift-text");
       var navShift = document.getElementById("nav-shift-status");
@@ -1571,6 +1606,84 @@
       });
     }
 
+    /* ===== CLOSING SHIFT CALCULATOR ===== */
+    var pecahanList = [
+      { label: 'Rp 100.000', value: 100000 },
+      { label: 'Rp 50.000',  value: 50000 },
+      { label: 'Rp 20.000',  value: 20000 },
+      { label: 'Rp 10.000',  value: 10000 },
+      { label: 'Rp 5.000',   value: 5000 },
+      { label: 'Rp 2.000',   value: 2000 },
+      { label: 'Rp 1.000',   value: 1000 },
+      { label: 'Rp 500',     value: 500 },
+      { label: 'Rp 200',     value: 200 },
+      { label: 'Rp 100',     value: 100 }
+    ];
+
+    function openClosingShift() {
+      renderClosingModal();
+      openModal('modal-closing-shift');
+    }
+
+    function renderClosingModal() {
+      var container = document.getElementById('closing-pecahan-list');
+      var systemTotal = 0;
+      if (window.cashService && window.cashService.getDailySummary) {
+        var summary = window.cashService.getDailySummary();
+        systemTotal = (summary.modal_awal || 0) + (summary.uang_masuk || 0) - (summary.uang_keluar || 0) + (summary.penjualan_produk || 0) - (summary.piutang_customer || 0) + (summary.topup || 0) + (summary.total_admin_fee || 0) - (summary.tarik_tunai || 0);
+      }
+      document.getElementById('closing-system-total').textContent = fmt(systemTotal);
+
+      var html = '';
+      pecahanList.forEach(function(p, i) {
+        html +=
+          '<div class="pecahan-row">' +
+            '<span class="pecahan-label">' + p.label + '</span>' +
+            '<input type="number" class="pecahan-input" id="pecahan-' + i + '" value="0" min="0" oninput="calcClosing()">' +
+            '<span class="pecahan-subtotal" id="pecahan-sub-' + i + '">Rp 0</span>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+      calcClosing();
+    }
+
+    function calcClosing() {
+      var fisikTotal = 0;
+      pecahanList.forEach(function(p, i) {
+        var qty = parseInt(document.getElementById('pecahan-' + i).value) || 0;
+        var sub = qty * p.value;
+        fisikTotal += sub;
+        document.getElementById('pecahan-sub-' + i).textContent = fmt(sub);
+      });
+      document.getElementById('closing-fisik-total').textContent = fmt(fisikTotal);
+
+      var systemText = document.getElementById('closing-system-total').textContent.replace(/[^0-9]/g, '');
+      var systemTotal = parseInt(systemText) || 0;
+      var selisih = fisikTotal - systemTotal;
+      var selisihRow = document.getElementById('closing-selisih-row');
+      var selisihEl = document.getElementById('closing-selisih');
+
+      selisihRow.style.display = 'flex';
+      selisihEl.textContent = (selisih >= 0 ? '+' : '') + fmt(selisih);
+      selisihEl.style.color = selisih === 0 ? 'var(--success)' : selisih > 0 ? 'var(--warning)' : 'var(--danger)';
+      selisihRow.style.background = selisih === 0 ? 'var(--success-light)' : selisih > 0 ? 'var(--warning-light)' : 'var(--danger-light)';
+    }
+
+    function confirmClosingShift() {
+      var fisikText = document.getElementById('closing-fisik-total').textContent.replace(/[^0-9]/g, '');
+      var fisikTotal = parseInt(fisikText) || 0;
+      window.cashService.closingShift(fisikTotal).then(function(shift) {
+        var penjualan = 0, laba = 0;
+        if (shift && shift.summary) {
+          penjualan = shift.summary.penjualan_produk || 0;
+          laba = shift.summary.total_laba || 0;
+        }
+        addNotif('🔒 Closing shift. Fisik: ' + fmt(fisikTotal) + ' · Penjualan: ' + fmt(penjualan) + ' · Laba: ' + fmt(laba));
+        closeModal('modal-closing-shift');
+        renderDashboard();
+      });
+    }
+
     /* ===== LIVE FEE PREVIEW ===== */
     document.getElementById("input-topup").addEventListener("input", function(e) {
       var val = parseFloat(e.target.value) || 0;
@@ -1625,9 +1738,17 @@
           document.getElementById("greeting-text").textContent = 
             greet + ", " + session.name + ". Siap melayani hari ini?";
 
-          // Render dashboard
-          renderDashboard();
-        });
+          // Restore shift dari Firebase (fix hilang setelah refresh)
+          db.ref("shifts/" + user.uid + "/current").once("value").then(function(shiftSnap) {
+            var shift = shiftSnap.val();
+            if (shift && window.cashService) {
+              window.cashService.current = shift;
+            }
+            renderDashboard();
+          }).catch(function(err) {
+            console.log("Shift restore:", err);
+            renderDashboard();
+          });
       });
 
       // Theme
