@@ -4,9 +4,14 @@
  */
 class DebtService {
   constructor() {
-    this.STORAGE_KEY = 'webpos_debts_v3';
-    this.debts = this.load();
-  }
+  this.debts = [];
+  
+  // Realtime listener dari Firebase
+  db.ref("debts").orderByChild("createdAt").on("value", snap => {
+    const data = snap.val() || {};
+    this.debts = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+  });
+}
 
   load() {
     try { return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || []; }
@@ -17,31 +22,39 @@ class DebtService {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.debts));
   }
 
-  addDebt(transaction) {
-    const debt = {
-      id: 'DB-' + Date.now(),
-      transaction_id: transaction.id,
-      customer: transaction.customer || 'Umum',
-      amount: transaction.total,
-      paid: 0,
-      status: 'unpaid',
-      date: new Date().toISOString()
-    };
-    this.debts.push(debt);
-    this.save();
-    return debt;
-  }
+ async addDebt(transaction) {
+  const debtId = 'DBT-' + Date.now();
+  const debt = {
+    id: debtId,
+    transaction_id: transaction.id,
+    customer: transaction.customer || "Umum",
+    amount: transaction.total,
+    paid: 0,
+    status: "unpaid",
+    createdAt: new Date().toISOString(),
+    dateKey: new Date().toISOString().split("T")[0]
+  };
+  await db.ref(`debts/${debtId}`).set(debt);
+  return debt;
+}
 
-  payDebt(debtId, amount) {
-    const debt = this.debts.find(d => d.id === debtId);
-    if (!debt) throw new Error('Hutang tidak ditemukan');
-    
-    debt.paid += amount;
-    if (debt.paid >= debt.amount) debt.status = 'paid';
-    this.save();
-    return debt;
-  }
-
+  async payDebt(debtId, amount) {
+  const snap = await db.ref(`debts/${debtId}`).once("value");
+  const debt = snap.val();
+  if (!debt) throw new Error('Hutang tidak ditemukan');
+  
+  const newPaid = (debt.paid || 0) + amount;
+  const status = newPaid >= debt.amount ? "paid" : "partial";
+  
+  await db.ref(`debts/${debtId}`).update({
+    paid: newPaid,
+    status: status,
+    lastPayment: new Date().toISOString()
+  });
+  
+  return { ...debt, paid: newPaid, status };
+}
+  
   getAll() { return [...this.debts]; }
   getUnpaid() { return this.debts.filter(d => d.status === 'unpaid'); }
 }
