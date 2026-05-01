@@ -899,9 +899,9 @@
   <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <div class="nav-section">
+            <div class="nav-section">
         <div class="nav-section-title">Menu Utama</div>
-                <a href="index.html" class="nav-item active">
+        <a href="index.html" class="nav-item active">
           <span class="icon">📈</span>
           <span>Dashboard</span>
         </a>
@@ -917,16 +917,18 @@
           <span class="icon">🛒</span>
           <span>Pembelian</span>
         </a>
+      </div>
 
-              <a href="page-laporan.html" class="nav-item">
-          <span class="icon">📊</span>
-          <span>Laporan</span>
-        </a>
+      <div class="nav-section">
+        <div class="nav-section-title">Keuangan</div>
         <a href="page-hutang.html" class="nav-item">
           <span class="icon">💳</span>
           <span>Hutang / Piutang</span>
         </a>
-        
+        <a href="page-laporan.html" class="nav-item">
+          <span class="icon">📊</span>
+          <span>Laporan</span>
+        </a>
         <a href="page-kas-management.html" class="nav-item">
           <span class="icon">💰</span>
           <span>Manajemen Kas</span>
@@ -1776,7 +1778,16 @@
                 count++;
               }
             }
-            console.log("[Transfer] Loaded", count, "users");
+              if (count === 0) {
+              var opt = document.createElement("option");
+              opt.value = "";
+              opt.disabled = true;
+              opt.textContent = "⚠️ Belum ada user lain di V3";
+              sel.appendChild(opt);
+              console.log("[Transfer] No other users found in /users");
+            } else {
+              console.log("[Transfer] Loaded", count, "users");
+            }
           }).catch(function(err) {
             console.error("[Transfer] Failed to load users:", err);
           });
