@@ -5,18 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0ea5e9">
   <title>Dashboard — WebPOS</title>
-  
+
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-
-  <!-- Firebase SDK (tambah di sini) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  
   <link rel="stylesheet" href="css/themes.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <style>
     /* ============================================
        APP SHELL
@@ -33,7 +27,7 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: var(--header-h);
-      background: rgba(var(--surface), 0.85);
+      background: rgba(var(--primary-rgb), 0.08);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -282,7 +276,7 @@
     }
 
     /* ============================================
-       SHIFT STATUS BAR
+       SHIFT STATUS BAR + TOGGLE SWITCH
        ============================================ */
     .shift-bar {
       display: flex;
@@ -347,9 +341,86 @@
       margin-top: 2px;
     }
 
-    .shift-actions {
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 64px;
+      height: 34px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--danger-light);
+      border-radius: 34px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid var(--danger);
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 26px;
+      width: 26px;
+      left: 2px;
+      bottom: 2px;
+      background: var(--danger);
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
       display: flex;
-      gap: var(--space-3);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--success-light);
+      border-color: var(--success);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(30px);
+      background: var(--success);
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    }
+
+    .toggle-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .toggle-label.off {
+      right: 8px;
+      color: var(--danger);
+    }
+
+    .toggle-label.on {
+      left: 8px;
+      color: var(--success);
+      opacity: 0;
+    }
+
+    .toggle-switch input:checked ~ .toggle-label.off {
+      opacity: 0;
+    }
+
+    .toggle-switch input:checked ~ .toggle-label.on {
+      opacity: 1;
     }
 
     /* ============================================
@@ -470,7 +541,7 @@
     }
 
     /* ============================================
-       CASH GRID — Detail Cards
+       CASH GRID + TOTAL UANG
        ============================================ */
     .cash-grid {
       display: grid;
@@ -509,6 +580,56 @@
 
     .cash-item .cash-val.positive { color: var(--success); }
     .cash-item .cash-val.negative { color: var(--danger); }
+
+    /* Total Uang — Hero Card */
+    .total-cash-hero {
+      grid-column: 1 / -1;
+      padding: var(--space-6) var(--space-8);
+      background: var(--gradient-primary);
+      border-radius: var(--radius-xl);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .total-cash-hero::before {
+      content: '💰';
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 120px;
+      opacity: 0.12;
+      filter: blur(2px);
+    }
+
+    .total-cash-hero .total-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: var(--space-2);
+    }
+
+    .total-cash-hero .total-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .total-cash-hero .total-formula {
+      font-size: 12px;
+      opacity: 0.75;
+      margin-top: var(--space-2);
+      max-width: 70%;
+      line-height: 1.5;
+    }
 
     /* ============================================
        QUICK ACTIONS — Bento Grid
@@ -583,7 +704,7 @@
     }
 
     /* ============================================
-       MODULE GRID
+       MODULE GRID — MODERN REVISION
        ============================================ */
     .module-grid {
       display: grid;
@@ -592,49 +713,80 @@
     }
 
     .module-item {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: var(--space-3);
-      padding: var(--space-5) var(--space-4);
+      padding: var(--space-6) var(--space-4);
       background: var(--bg);
       border: 1.5px solid var(--border);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-xl);
       color: var(--text-secondary);
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
       transition: all var(--transition-base);
       text-align: center;
+      overflow: hidden;
+    }
+
+    .module-item::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: var(--gradient-primary);
+      transition: height var(--transition-base);
+      opacity: 0.15;
     }
 
     .module-item:hover {
-      background: var(--primary-light);
       border-color: var(--primary);
       color: var(--primary);
-      transform: translateY(-3px);
+      transform: translateY(-4px);
       box-shadow: var(--shadow-lg);
     }
 
+    .module-item:hover::after {
+      height: 100%;
+    }
+
     .module-item .module-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-full);
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-lg);
       background: var(--primary-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 28px;
       transition: all var(--transition-base);
+      position: relative;
+      z-index: 1;
     }
 
     .module-item:hover .module-icon {
       background: var(--gradient-primary);
-      transform: scale(1.1);
+      transform: scale(1.1) rotate(-4deg);
+      box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
+    }
+
+    .module-item .module-name {
+      position: relative;
+      z-index: 1;
+      transition: color var(--transition-fast);
+    }
+
+    .module-item:hover .module-name {
+      color: var(--primary);
+      font-weight: 700;
     }
 
     /* ============================================
-       MODALS — Centered & Backdrop Blur
+       MODALS
        ============================================ */
     .modal-overlay {
       display: none;
@@ -791,54 +943,62 @@
         --sidebar-w: 0px;
         --header-h: 56px;
       }
-      
+
       .main {
         margin-left: 0;
         padding: var(--space-4);
       }
-      
+
       .sidebar {
         transform: translateX(-100%);
         width: 280px;
       }
-      
+
       .sidebar.show-mobile {
         transform: translateX(0);
       }
-      
+
       .stats-grid { grid-template-columns: 1fr; }
       .cash-grid { grid-template-columns: 1fr; }
       .bento-grid { grid-template-columns: repeat(2, 1fr); }
       .module-grid { grid-template-columns: repeat(2, 1fr); }
-      
+
       .shift-bar {
         flex-direction: column;
         align-items: flex-start;
+        gap: var(--space-4);
       }
-      
-      .shift-actions {
-        width: 100%;
-      }
-      
-      .shift-actions .btn {
-        flex: 1;
-      }
-      
+
       .page-header h1 {
         font-size: 22px;
       }
-      
+
       .notif-panel {
         width: calc(100vw - 32px);
         right: -50px;
+      }
+
+      .total-cash-hero .total-value {
+        font-size: 26px;
+      }
+
+      .total-cash-hero .total-formula {
+        max-width: 100%;
+        font-size: 11px;
       }
     }
 
     @media (max-width: 480px) {
       .bento-grid { grid-template-columns: 1fr; }
       .module-grid { grid-template-columns: repeat(2, 1fr); }
+      .total-cash-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+      }
     }
   </style>
+<base target="_blank">
 </head>
 <body class="theme-ocean">
 
@@ -849,7 +1009,7 @@
       <div class="logo">🛒</div>
       <span class="title">WebPOS</span>
     </div>
-    
+
     <div class="header-actions">
       <div style="position:relative;">
         <button class="header-btn" onclick="toggleNotif()" aria-label="Notifikasi">
@@ -863,7 +1023,7 @@
           </div>
         </div>
       </div>
-      
+
       <button class="header-btn" onclick="toggleDarkMode()" id="btn-theme" aria-label="Tema">🌙</button>
       <button class="header-btn" onclick="toggleProfile()" aria-label="Profil">👤</button>
     </div>
@@ -894,7 +1054,7 @@
           <span>Pembelian</span>
         </a>
       </div>
-      
+
       <div class="nav-section">
         <div class="nav-section-title">Keuangan</div>
         <a href="page-hutang.html" class="nav-item">
@@ -910,7 +1070,7 @@
           <span>Manajemen Kas</span>
         </a>
       </div>
-      
+
       <div class="nav-section">
         <div class="nav-section-title">Sistem</div>
         <a href="page-setting.html" class="nav-item">
@@ -922,7 +1082,7 @@
           <span>Logout</span>
         </button>
       </div>
-      
+
       <div class="nav-footer" style="margin-top: 32px;">
         <div class="user-name" id="nav-user-name">Kasir</div>
         <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
@@ -934,33 +1094,30 @@
 
     <!-- MAIN -->
     <main class="main">
-      
+
       <!-- Page Header -->
       <div class="page-header animate-fade-in">
         <h1>Dashboard</h1>
         <p id="greeting-text">Selamat datang kembali di sistem POS Anda</p>
       </div>
 
-      <!-- Shift Status -->
+      <!-- Shift Status + Toggle Switch -->
       <div class="shift-bar animate-fade-in">
         <div class="shift-info">
           <div class="shift-pulse closed" id="shift-pulse"></div>
           <div class="shift-text">
             <div class="label">Status Shift</div>
-            <div class="value" id="shift-text">Shift Tutup — Buka untuk memulai</div>
+            <div class="value" id="shift-text">Shift Tutup — Aktifkan untuk memulai</div>
           </div>
         </div>
-        <div class="shift-actions">
-          <button class="btn btn-primary" onclick="openModal('modal-shift-open')">
-            <span>📂</span> Buka Shift
-          </button>
-          <button class="btn btn-danger" onclick="openModal('modal-shift-close')">
-            <span>🔒</span> Tutup Shift
-          </button>
-          <button class="btn btn-secondary" onclick="openModal('modal-transfer')" id="btn-transfer" style="display:none;">
-            <span>🔀</span> Transfer
-          </button>
-        </div>
+
+        <!-- Toggle Switch -->
+        <label class="toggle-switch" id="shift-toggle-wrapper">
+          <input type="checkbox" id="shift-toggle" onchange="handleShiftToggle(this)">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label off">OFF</span>
+          <span class="toggle-label on">ON</span>
+        </label>
       </div>
 
       <!-- Stats Cards -->
@@ -971,21 +1128,21 @@
           <div class="stat-value" id="stat-modal">Rp 0</div>
           <div class="stat-trend">Modal shift saat ini</div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon orange">🧾</div>
           <div class="stat-label">Total Transaksi</div>
           <div class="stat-value" id="stat-transaksi">0</div>
           <div class="stat-trend">Transaksi hari ini</div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon green">📈</div>
           <div class="stat-label">Total Laba</div>
           <div class="stat-value success" id="stat-laba">Rp 0</div>
           <div class="stat-trend">Profit hari ini</div>
         </div>
-        
+
         <div class="stat-card">
           <div class="stat-icon red">💳</div>
           <div class="stat-label">Piutang Customer</div>
@@ -994,13 +1151,25 @@
         </div>
       </div>
 
-      <!-- Cash Calculation -->
+      <!-- Cash Calculation + Total Uang Hero -->
       <div class="section-card animate-fade-in">
         <div class="section-header">
           <div class="section-title">💰 Perhitungan Kas Hari Ini</div>
           <div class="section-meta" id="last-update">--:--</div>
         </div>
+
         <div class="cash-grid">
+          <!-- Total Uang Hero -->
+          <div class="total-cash-hero" id="total-cash-hero">
+            <div>
+              <div class="total-label">Total Uang di Kas</div>
+              <div class="total-value" id="total-uang">Rp 0</div>
+              <div class="total-formula">
+                Modal + Masuk − Keluar + Penjualan − Piutang + TopUp + FeeTopUp − Tarik + FeeTarik
+              </div>
+            </div>
+          </div>
+
           <div class="cash-item">
             <div class="cash-key">Modal Awal</div>
             <div class="cash-val" id="cash-modal">Rp 0</div>
@@ -1047,43 +1216,43 @@
             <span class="bento-label">Kasir</span>
             <span class="bento-desc">Transaksi penjualan</span>
           </a>
-          
+
           <button class="bento-item" onclick="openModal('modal-set-modal')">
             <div class="bento-icon">💵</div>
             <span class="bento-label">Set Modal</span>
             <span class="bento-desc">Atur modal awal</span>
           </button>
-          
+
           <button class="bento-item" onclick="openModal('modal-kas-masuk')">
             <div class="bento-icon">📥</div>
             <span class="bento-label">Kas Masuk</span>
             <span class="bento-desc">Pemasukan tambahan</span>
           </button>
-          
+
           <button class="bento-item" onclick="openModal('modal-kas-keluar')">
             <div class="bento-icon">📤</div>
             <span class="bento-label">Kas Keluar</span>
             <span class="bento-desc">Pengeluaran operasional</span>
           </button>
-          
+
           <button class="bento-item" onclick="openModal('modal-topup')">
             <div class="bento-icon">➕</div>
             <span class="bento-label">Top Up</span>
             <span class="bento-desc">Isi saldo kasir</span>
           </button>
-          
+
           <button class="bento-item" onclick="openModal('modal-tarik')">
             <div class="bento-icon">➖</div>
             <span class="bento-label">Tarik Tunai</span>
             <span class="bento-desc">Ambil uang dari kas</span>
           </button>
-          
+
           <a href="page-laporan.html" class="bento-item">
             <div class="bento-icon">📈</div>
             <span class="bento-label">Laporan</span>
             <span class="bento-desc">Ringkasan penjualan</span>
           </a>
-          
+
           <button class="bento-item" onclick="openModal('modal-transfer')">
             <div class="bento-icon">🔀</div>
             <span class="bento-label">Transfer Shift</span>
@@ -1092,7 +1261,7 @@
         </div>
       </div>
 
-      <!-- Module Shortcuts -->
+      <!-- Module Shortcuts — MODERN -->
       <div class="section-card animate-fade-in">
         <div class="section-header">
           <div class="section-title">🧩 Modul Operasional</div>
@@ -1100,27 +1269,27 @@
         <div class="module-grid">
           <a href="page-kasir.html" class="module-item">
             <div class="module-icon">🛒</div>
-            <span>Kasir</span>
+            <span class="module-name">Kasir</span>
           </a>
           <a href="page-produk.html" class="module-item">
             <div class="module-icon">📦</div>
-            <span>Produk</span>
+            <span class="module-name">Produk</span>
           </a>
           <a href="page-pembelian.html" class="module-item">
             <div class="module-icon">📥</div>
-            <span>Pembelian</span>
+            <span class="module-name">Pembelian</span>
           </a>
           <a href="page-hutang.html" class="module-item">
             <div class="module-icon">💳</div>
-            <span>Hutang</span>
+            <span class="module-name">Hutang</span>
           </a>
           <a href="page-laporan.html" class="module-item">
             <div class="module-icon">📈</div>
-            <span>Laporan</span>
+            <span class="module-name">Laporan</span>
           </a>
           <a href="page-setting.html" class="module-item">
             <div class="module-icon">⚙️</div>
-            <span>Setting</span>
+            <span class="module-name">Setting</span>
           </a>
         </div>
       </div>
@@ -1129,7 +1298,7 @@
   </div>
 
   <!-- ========== MODALS ========== -->
-  
+
   <!-- Buka Shift -->
   <div class="modal-overlay" id="modal-shift-open">
     <div class="modal-box">
@@ -1293,11 +1462,10 @@
 
   <!-- Services -->
   <script src="js/core/firebase-config.js"></script>
-  <script src="js/services/user-service.js"></script>
-  <script src="js/services/stock-service.js"></script>
   <script src="js/services/setting-service.js"></script>
   <script src="js/services/user-service.js"></script>
   <script src="js/services/transaction-service.js"></script>
+  <script src="js/services/stock-service.js"></script>
   <script src="js/services/cash-service.js"></script>
   <script src="js/services/debt-service.js"></script>
   <script src="js/services/printer-service.js"></script>
@@ -1306,23 +1474,23 @@
   <script>
     /* ===== UTILS ===== */
     const fmt = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
-    
+
     function openModal(id) {
       document.getElementById(id).classList.add('active');
       document.body.style.overflow = 'hidden';
     }
-    
+
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
       document.body.style.overflow = '';
     }
-    
+
     /* ===== SIDEBAR ===== */
     function toggleSidebar() {
       const sb = document.getElementById('sidebar');
       const ov = document.getElementById('sidebar-overlay');
       const isMobile = window.innerWidth <= 768;
-      
+
       if (isMobile) {
         sb.classList.toggle('show-mobile');
         ov.classList.toggle('active');
@@ -1330,8 +1498,7 @@
         const isCollapsed = sb.style.width === '72px';
         sb.style.width = isCollapsed ? '280px' : '72px';
         document.querySelector('.main').style.marginLeft = isCollapsed ? '280px' : '72px';
-        
-        // Toggle text visibility
+
         document.querySelectorAll('.nav-item span:last-child').forEach(el => {
           el.style.display = isCollapsed ? 'block' : 'none';
         });
@@ -1340,18 +1507,18 @@
         });
       }
     }
-    
+
     /* ===== NOTIF ===== */
     function toggleNotif() {
       document.getElementById('notif-panel').classList.toggle('active');
     }
-    
+
     function addNotif(text) {
       const list = document.getElementById('notif-list');
       const count = document.getElementById('notif-count');
-      
+
       if (list.querySelector('.notif-empty')) list.innerHTML = '';
-      
+
       const div = document.createElement('div');
       div.className = 'notif-item animate-slide-in';
       div.innerHTML = `
@@ -1359,41 +1526,54 @@
         <div class="notif-time">${new Date().toLocaleTimeString('id-ID')}</div>
       `;
       list.prepend(div);
-      
+
       count.style.display = 'flex';
       count.textContent = list.children.length;
     }
-    
+
     /* ===== THEME ===== */
     function toggleDarkMode() {
       const isDark = document.body.classList.toggle('dark-mode');
       window.settingService.setDarkMode(isDark);
       document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
     }
-    
+
     /* ===== PROFILE ===== */
     function toggleProfile() {
       const user = window.userService.getCurrent();
       alert(`👤 ${user.name}\n🏷️ Role: ${user.role}\n🕐 Login: ${new Date().toLocaleString('id-ID')}`);
     }
-    
+
     function logout() {
       if (confirm('Yakin ingin logout?')) {
         window.userService.logout();
         location.reload();
       }
     }
-    
+
+    /* ===== SHIFT TOGGLE ===== */
+    function handleShiftToggle(el) {
+      if (el.checked) {
+        // Mau buka shift
+        openModal('modal-shift-open');
+      } else {
+        // Mau tutup shift
+        openModal('modal-shift-close');
+      }
+      // Reset checkbox — nanti di-update oleh renderDashboard setelah konfirmasi
+      el.checked = !el.checked;
+    }
+
     /* ===== RENDER DASHBOARD ===== */
     function renderDashboard() {
       const summary = window.cashService.getDailySummary();
-      
+
       // Stats
       document.getElementById('stat-modal').textContent = fmt(summary.modal_awal);
       document.getElementById('stat-transaksi').textContent = summary.total_transaksi;
       document.getElementById('stat-laba').textContent = fmt(summary.total_laba);
       document.getElementById('stat-piutang').textContent = fmt(summary.piutang_customer);
-      
+
       // Cash detail
       document.getElementById('cash-modal').textContent = fmt(summary.modal_awal);
       document.getElementById('cash-masuk').textContent = fmt(summary.uang_masuk);
@@ -1404,57 +1584,67 @@
       document.getElementById('cash-fee').textContent = fmt(summary.total_admin_fee);
       document.getElementById('cash-piutang').textContent = fmt(summary.piutang_customer);
       document.getElementById('last-update').textContent = 'Diperbarui ' + new Date().toLocaleTimeString('id-ID');
-      
+
+      // Total Uang — rumus lengkap
+      const totalUang = 
+        (summary.modal_awal || 0) 
+        + (summary.uang_masuk || 0) 
+        - (summary.uang_keluar || 0) 
+        + (summary.penjualan_produk || 0) 
+        - (summary.piutang_customer || 0) 
+        + (summary.topup || 0) 
+        + (summary.total_admin_fee || 0) 
+        - (summary.tarik_tunai || 0);
+      document.getElementById('total-uang').textContent = fmt(totalUang);
+
       // Shift status
-      const current = window.cashService.getCurrentShift();
+      const current = window.cashService.current;
       const pulse = document.getElementById('shift-pulse');
       const text = document.getElementById('shift-text');
       const navShift = document.getElementById('nav-shift-status');
-      
+      const toggle = document.getElementById('shift-toggle');
+
       if (current) {
         pulse.classList.remove('closed');
-        text.textContent = `Shift Aktif — ${current.kasir} · Modal ${fmt(current.modal_awal)}`;
+        text.textContent = `Shift Aktif — ${current.kasirName || 'Kasir'} · Modal ${fmt(current.modal_awal)}`;
         navShift.style.display = 'inline-flex';
         navShift.textContent = 'SHIFT AKTIF';
+        toggle.checked = true;
       } else {
         pulse.classList.add('closed');
-        text.textContent = 'Shift Tutup — Buka untuk memulai transaksi';
+        text.textContent = 'Shift Tutup — Aktifkan untuk memulai transaksi';
         navShift.style.display = 'none';
+        toggle.checked = false;
       }
-      
+
       // User info
       const user = window.userService.getCurrent();
       document.getElementById('nav-user-name').textContent = user.name || 'Kasir';
       document.getElementById('nav-user-role').textContent = (user.role || 'KASIR').toUpperCase();
-      
-      // Transfer button visibility
-      if (['Owner','Admin'].includes(user.role)) {
-        document.getElementById('btn-transfer').style.display = 'inline-flex';
-      }
     }
-    
+
     /* ===== ACTIONS ===== */
-    function confirmOpenShift() {
+    async function confirmOpenShift() {
       const val = parseFloat(document.getElementById('input-modal-awal').value) || 0;
       const user = window.userService.getCurrent();
-      window.cashService.openShift(val, user.name);
+      await window.cashService.openShift(val, user.name);
       addNotif(`✅ Shift dibuka oleh ${user.name} dengan modal ${fmt(val)}`);
       closeModal('modal-shift-open');
       renderDashboard();
     }
-    
-    function confirmCloseShift() {
-      const shift = window.cashService.closingShift();
-      addNotif(`🔒 Shift ditutup. Penjualan: ${fmt(shift.penjualan_produk)} · Laba: ${fmt(shift.total_laba || 0)}`);
+
+    async function confirmCloseShift() {
+      const shift = await window.cashService.closingShift();
+      addNotif(`🔒 Shift ditutup. Penjualan: ${fmt(shift.summary?.penjualan_produk || 0)} · Laba: ${fmt(shift.summary?.total_laba || 0)}`);
       closeModal('modal-shift-close');
       renderDashboard();
     }
-    
-    function confirmTransfer() {
+
+    async function confirmTransfer() {
       const targetId = document.getElementById('select-transfer-user').value;
       if (!targetId) return alert('Pilih user tujuan terlebih dahulu');
-      
-      const result = window.cashService.transferShift(targetId, window.userService);
+
+      const result = await window.cashService.transferShift(targetId, window.userService);
       if (result.success) {
         addNotif(`🔀 Shift ditransfer ke ${result.targetName} · Modal baru: ${fmt(result.modal)}`);
         closeModal('modal-transfer');
@@ -1463,36 +1653,36 @@
         alert('❌ ' + result.error);
       }
     }
-    
-    function confirmSetModal() {
+
+    async function confirmSetModal() {
       const val = parseFloat(document.getElementById('input-set-modal').value) || 0;
-      window.cashService.setModalAwal(val);
+      await window.cashService.setModalAwal(val);
       addNotif(`💵 Modal awal diperbarui: ${fmt(val)}`);
       closeModal('modal-set-modal');
       renderDashboard();
     }
-    
-    function confirmKasMasuk() {
+
+    async function confirmKasMasuk() {
       const val = parseFloat(document.getElementById('input-kas-masuk').value) || 0;
       const note = document.getElementById('input-kas-masuk-note').value;
-      window.cashService.addCash(val, note);
+      await window.cashService.addCash(val, note);
       addNotif(`📥 Kas masuk ${fmt(val)}${note ? ' · ' + note : ''}`);
       closeModal('modal-kas-masuk');
       renderDashboard();
     }
-    
-    function confirmKasKeluar() {
+
+    async function confirmKasKeluar() {
       const val = parseFloat(document.getElementById('input-kas-keluar').value) || 0;
       const note = document.getElementById('input-kas-keluar-note').value;
-      window.cashService.reduceCash(val, note);
+      await window.cashService.reduceCash(val, note);
       addNotif(`📤 Kas keluar ${fmt(val)}${note ? ' · ' + note : ''}`);
       closeModal('modal-kas-keluar');
       renderDashboard();
     }
-    
-    function confirmTopUp() {
+
+    async function confirmTopUp() {
       const val = parseFloat(document.getElementById('input-topup').value) || 0;
-      const result = window.cashService.topUp(val);
+      const result = await window.cashService.topUp(val);
       if (result.success) {
         addNotif(`➕ Top up ${fmt(result.amount)} (fee ${fmt(result.fee)})`);
         closeModal('modal-topup');
@@ -1501,10 +1691,10 @@
         alert('❌ ' + result.error);
       }
     }
-    
-    function confirmTarik() {
+
+    async function confirmTarik() {
       const val = parseFloat(document.getElementById('input-tarik').value) || 0;
-      const result = window.cashService.tarikTunai(val);
+      const result = await window.cashService.tarikTunai(val);
       if (result.success) {
         addNotif(`➖ Tarik tunai ${fmt(result.received)} (fee ${fmt(result.fee)})`);
         closeModal('modal-tarik');
@@ -1513,7 +1703,7 @@
         alert('❌ ' + result.error);
       }
     }
-    
+
     /* ===== LIVE FEE PREVIEW ===== */
     document.getElementById('input-topup').addEventListener('input', (e) => {
       const val = parseFloat(e.target.value) || 0;
@@ -1523,7 +1713,7 @@
       document.getElementById('topup-fee-display').textContent = fmt(fee);
       document.getElementById('topup-net').textContent = fmt(net);
     });
-    
+
     document.getElementById('input-tarik').addEventListener('input', (e) => {
       const val = parseFloat(e.target.value) || 0;
       const feeCfg = window.settingService.getAdminFee();
@@ -1532,7 +1722,7 @@
       document.getElementById('tarik-fee-display').textContent = fmt(fee);
       document.getElementById('tarik-total').textContent = fmt(total);
     });
-    
+
     /* ===== INIT ===== */
     document.addEventListener('DOMContentLoaded', () => {
       // Theme
@@ -1542,26 +1732,28 @@
         document.body.classList.add('dark-mode');
         document.getElementById('btn-theme').textContent = '☀️';
       }
-      
+
       // Transfer dropdown
-      const users = window.userService.getAll().filter(u => u.id !== window.userService.getCurrent().id);
-      const sel = document.getElementById('select-transfer-user');
-      users.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.textContent = `${u.name} (${u.role})`;
-        sel.appendChild(opt);
+      window.userService.getAll().then(users => {
+        const sel = document.getElementById('select-transfer-user');
+        const current = window.userService.getCurrent();
+        users.filter(u => u.id !== current.id).forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = `${u.name} (${u.role})`;
+          sel.appendChild(opt);
+        });
       });
-      
+
       // Render
       renderDashboard();
-      
+
       // Event listeners
       window.addEventListener('transaction:completed', () => {
         renderDashboard();
         addNotif('🧾 Transaksi baru berhasil tercatat');
       });
-      
+
       // Greeting
       const hour = new Date().getHours();
       let greet = 'Selamat malam';
