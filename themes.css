@@ -1,0 +1,228 @@
+:root {
+  --font-base: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --transition: all 0.3s ease;
+}
+
+/* === 1. OCEAN (Default) === */
+.theme-ocean {
+  --primary: #0066cc;
+  --primary-light: #e6f2ff;
+  --primary-dark: #004499;
+  --bg: #f0f7ff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #0f1b2d;
+  --text-secondary: #5a6a7a;
+  --border: #d0e3f0;
+  --success: #00b894;
+  --danger: #ff7675;
+  --warning: #fdcb6e;
+  --info: #74b9ff;
+}
+
+/* === 2. SUNSET === */
+.theme-sunset {
+  --primary: #e17055;
+  --primary-light: #ffeaa7;
+  --primary-dark: #d63031;
+  --bg: #fff5f0;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #2d142c;
+  --text-secondary: #8e6e6e;
+  --border: #f0d0c0;
+  --success: #00b894;
+  --danger: #d63031;
+  --warning: #e1b12c;
+  --info: #74b9ff;
+}
+
+/* === 3. FOREST === */
+.theme-forest {
+  --primary: #2d6a4f;
+  --primary-light: #d8f3dc;
+  --primary-dark: #1b4332;
+  --bg: #f0f7f2;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #52796f;
+  --border: #b7e4c7;
+  --success: #40916c;
+  --danger: #e63946;
+  --warning: #f4a261;
+  --info: #2a9d8f;
+}
+
+/* === 4. MIDNIGHT === */
+.theme-midnight {
+  --primary: #6c5ce7;
+  --primary-light: #a29bfe;
+  --primary-dark: #4834d4;
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --card: #16213e;
+  --text: #eaeaea;
+  --text-secondary: #a0a0a0;
+  --border: #2a2a40;
+  --success: #00b894;
+  --danger: #ff7675;
+  --warning: #fdcb6e;
+  --info: #74b9ff;
+}
+
+/* === 5. LAVENDER === */
+.theme-lavender {
+  --primary: #9b59b6;
+  --primary-light: #f5eef8;
+  --primary-dark: #8e44ad;
+  --bg: #faf5ff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #2c003e;
+  --text-secondary: #8e6e9e;
+  --border: #e0c3fc;
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+  --info: #3498db;
+}
+
+/* === 6. CHERRY === */
+.theme-cherry {
+  --primary: #e84393;
+  --primary-light: #fd79a8;
+  --primary-dark: #d63081;
+  --bg: #fff0f5;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #2d142c;
+  --text-secondary: #9e6e8e;
+  --border: #f0c0d0;
+  --success: #55efc4;
+  --danger: #d63031;
+  --warning: #fdcb6e;
+  --info: #81ecec;
+}
+
+/* === 7. MONOCROME === */
+.theme-monochrome {
+  --primary: #2d3436;
+  --primary-light: #dfe6e9;
+  --primary-dark: #000000;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #2d3436;
+  --text-secondary: #636e72;
+  --border: #b2bec3;
+  --success: #00b894;
+  --danger: #d63031;
+  --warning: #fdcb6e;
+  --info: #74b9ff;
+}
+
+/* === 8. MINT === */
+.theme-mint {
+  --primary: #00b894;
+  --primary-light: #dff9fb;
+  --primary-dark: #00997a;
+  --bg: #f0fff9;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #1e272e;
+  --text-secondary: #58b19f;
+  --border: #c7ecee;
+  --success: #27ae60;
+  --danger: #c0392b;
+  --warning: #f1c40f;
+  --info: #2980b9;
+}
+
+/* === 9. COFFEE === */
+.theme-coffee {
+  --primary: #6f4e37;
+  --primary-light: #eaddcf;
+  --primary-dark: #4a3728;
+  --bg: #faf6f1;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #3e2723;
+  --text-secondary: #8d6e63;
+  --border: #d7ccc8;
+  --success: #558b2f;
+  --danger: #bf360c;
+  --warning: #f9a825;
+  --info: #5d4037;
+}
+
+/* === 10. ROYAL === */
+.theme-royal {
+  --primary: #f1c40f;
+  --primary-light: #f9e79f;
+  --primary-dark: #b7950b;
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --card: #0f3460;
+  --text: #f1c40f;
+  --text-secondary: #eaddcf;
+  --border: #533483;
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warning: #e67e22;
+  --info: #3498db;
+}
+
+/* === GLOBAL UTILITIES === */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-base);
+  background: var(--bg);
+  color: var(--text);
+  transition: var(--transition);
+  min-height: 100vh;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+.input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  width: 100%;
+  font-family: inherit;
+}
+.input:focus { outline: none; border-color: var(--primary); }
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.sidebar a { color: var(--text-secondary); text-decoration: none; }
+.sidebar a:hover, .sidebar a.active { color: var(--primary); background: var(--primary-light); }
+
+.text-primary { color: var(--primary); }
+.bg-primary { background: var(--primary); }
+.border-primary { border-color: var(--primary); }
