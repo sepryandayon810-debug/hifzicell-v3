@@ -1511,11 +1511,12 @@
     }
 
     /* ===== ACTIONS ===== */
-    function confirmOpenShift() {
+        function confirmOpenShift() {
       var val = parseFloat(document.getElementById("input-modal-awal").value) || 0;
       var user = window.userService.getCurrent();
       var kasirName = user.name || user.username || "Kasir";
-      window.cashService.openShift(val, kasirName).then(function() {
+      var today = new Date().toISOString().split('T')[0]; // "2026-05-01"
+      window.cashService.openShift(val, kasirName, today).then(function() {
         addNotif("✅ Shift dibuka oleh " + kasirName + " dengan modal " + fmt(val));
         closeModal("modal-shift-open");
         renderDashboard();
@@ -1739,10 +1740,23 @@
             greet + ", " + session.name + ". Siap melayani hari ini?";
 
           // Restore shift dari Firebase (fix hilang setelah refresh)
+                    // Restore shift dari Firebase (fix hilang setelah refresh)
           db.ref("shifts/" + user.uid + "/current").once("value").then(function(shiftSnap) {
             var shift = shiftSnap.val();
             if (shift && window.cashService) {
               window.cashService.current = shift;
+              
+              // ===== AUTO RESET MIDNIGHT =====
+              var today = new Date().toISOString().split('T')[0];
+              if (shift.shiftDate && shift.shiftDate !== today) {
+                // Shift kemarin masih kebuka → auto tutup + masukkan ke history
+                window.cashService.closingShift().then(function() {
+                  addNotif("🌙 Shift kemarin (" + shift.shiftDate + ") otomatis ditutup. Buka shift baru untuk hari ini.");
+                  window.cashService.current = null;
+                  renderDashboard();
+                });
+                return; // jangan renderDashboard() dulu, tunggu closingShift selesai
+              }
             }
             renderDashboard();
           }).catch(function(err) {
