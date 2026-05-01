@@ -856,7 +856,7 @@
       .modal-box { max-width: calc(100vw - 32px); }
     }
     @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .cash-grid { grid-template-columns: repeat(2, 1fr); }
       .bento-grid { grid-template-columns: repeat(2, 1fr); }
       .module-grid { grid-template-columns: repeat(2, 1fr); }
@@ -986,7 +986,7 @@
         </label>
       </div>
 
-      <!-- Stats Cards -->
+      <!-- Stats Cards — 3 card saja (Piutang dihapus) -->
       <div class="stats-grid animate-fade-in">
         <div class="stat-card">
           <div class="stat-icon blue">💵</div>
@@ -1007,13 +1007,6 @@
           <div class="stat-label">Total Laba</div>
           <div class="stat-value success" id="stat-laba">Rp 0</div>
           <div class="stat-trend">Profit hari ini</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon red">💳</div>
-          <div class="stat-label">Piutang Customer</div>
-          <div class="stat-value danger" id="stat-piutang">Rp 0</div>
-          <div class="stat-trend">Belum dibayar</div>
         </div>
       </div>
 
@@ -1437,7 +1430,6 @@
       document.getElementById("stat-modal").textContent = fmt(summary.modal_awal);
       document.getElementById("stat-transaksi").textContent = summary.total_transaksi;
       document.getElementById("stat-laba").textContent = fmt(summary.total_laba);
-      document.getElementById("stat-piutang").textContent = fmt(summary.piutang_customer);
 
       // Cash detail
       document.getElementById("cash-modal").textContent = fmt(summary.modal_awal);
@@ -1481,12 +1473,6 @@
         navShift.style.display = "none";
         toggle.checked = false;
       }
-
-      // User info dari Firebase
-      var fbUser = window.userService.getCurrent();
-      var displayName = fbUser.name || fbUser.username || "Kasir";
-      document.getElementById("nav-user-name").textContent = displayName;
-      document.getElementById("nav-user-role").textContent = (fbUser.role || "KASIR").toUpperCase();
     }
 
     /* ===== ACTIONS ===== */
@@ -1625,6 +1611,10 @@
           };
           localStorage.setItem("webpos_session_v3", JSON.stringify(session));
           window.userService.session = session;
+
+          // Update sidebar user info langsung
+          document.getElementById("nav-user-name").textContent = session.name;
+          document.getElementById("nav-user-role").textContent = (session.role || "KASIR").toUpperCase();
 
           // Greeting
           var hour = new Date().getHours();
