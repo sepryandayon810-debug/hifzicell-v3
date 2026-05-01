@@ -8,37 +8,46 @@ class CashService {
     this.mutations = [];
 
     // Listen shift aktif dari Firebase
-    db.ref("shifts").orderByChild("status").equalTo("open").on("value", snap => {
-      const data = snap.val() || {};
-      const open = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-      this.current = open.find(s => s.kasirId === getUid()) || open[0] || null;
-    });
+    db.ref("shifts").orderByChild("status").equalTo("open").on("value", function(snap) {
+      var data = snap.val() || {};
+      var open = [];
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+          open.push({ id: key, ...data[key] });
+        }
+      }
+      var uid = getUid ? getUid() : null;
+      var found = null;
+      for (var i = 0; i < open.length; i++) {
+        if (open[i].kasirId === uid) {
+          found = open[i];
+          break;
+        }
+      }
+      this.current = found || open[0] || null;
+    }.bind(this));
 
     // Listen kas mutations dari Firebase
-    db.ref("kas_mutations").orderByChild("timestamp").limitToLast(200).on("value", snap => {
-      const data = snap.val() || {};
-      this.mutations = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-    });
-  }
-
-  load() {
-    try { return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {}; }
-    catch { return {}; }
-  }
-
-  save() {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+    db.ref("kas_mutations").orderByChild("timestamp").limitToLast(200).on("value", function(snap) {
+      var data = snap.val() || {};
+      this.mutations = [];
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+          this.mutations.push({ id: key, ...data[key] });
+        }
+      }
+    }.bind(this));
   }
 
   async openShift(modal_awal, kasirName) {
-    const shiftId = 'SHIFT-' + Date.now();
-    const shift = {
+    var shiftId = 'SHIFT-' + Date.now();
+    var shift = {
       id: shiftId,
-      modal_awal: modal_awal,
+      modal_awal: modal_awal || 0,
       start: new Date().toISOString(),
       end: null,
-      kasirId: getUid() || "unknown",
-      kasirName: kasirName,
+      kasirId: (getUid ? getUid() : null) || "unknown",
+      kasirName: kasirName || "Kasir",
       status: "open"
     };
     await db.ref('shifts/' + shiftId).set(shift);
@@ -49,17 +58,17 @@ class CashService {
   async addMutation(type, amount, note, fee) {
     fee = fee || 0;
     if (!this.current) throw new Error("Shift belum dibuka");
-    const mutId = 'MUT-' + Date.now();
+    var mutId = 'MUT-' + Date.now();
     await db.ref('kas_mutations/' + mutId).set({
       id: mutId,
-      shiftId: this.current.id,
-      type: type,
-      amount: amount,
-      note: note,
+      shiftId: this.current.id || "",
+      type: type || "in",
+      amount: amount || 0,
+      note: note || "",
       fee: fee,
       timestamp: new Date().toISOString(),
       dateKey: new Date().toISOString().split("T")[0],
-      kasirId: getUid()
+      kasirId: (getUid ? getUid() : null) || "unknown"
     });
   }
 
@@ -73,8 +82,8 @@ class CashService {
 
   async closingShift() {
     if (!this.current) throw new Error("Tidak ada shift aktif");
-    const summary = this.getDailySummary();
-    const shiftUpdate = {
+    var summary = this.getDailySummary();
+    var shiftUpdate = {
       end: new Date().toISOString(),
       status: "closed",
       summary: summary
@@ -97,26 +106,53 @@ class CashService {
       todayTxs = window.transactionService.getToday();
     }
 
-    var todayMuts = this.mutations.filter(function(m) {
-      return m.dateKey === today && m.shiftId === shiftId;
-    });
+    var todayMuts = [];
+    for (var i = 0; i < this.mutations.length; i++) {
+      var m = this.mutations[i];
+      if (m.dateKey === today && m.shiftId === shiftId) {
+        todayMuts.push(m);
+      }
+    }
 
-    var kasMasuk = todayMuts.filter(function(m) { return m.type === "in"; }).reduce(function(s, m) { return s + m.amount; }, 0);
-    var kasKeluar = todayMuts.filter(function(m) { return m.type === "out"; }).reduce(function(s, m) { return s + m.amount; }, 0);
-    var topups = todayMuts.filter(function(m) { return m.type === "topup"; });
-    var tariks = todayMuts.filter(function(m) { return m.type === "tarik"; });
+    var kasMasuk = 0;
+    var kasKeluar = 0;
+    var topups = [];
+    var tariks = [];
+    for (var i = 0; i < todayMuts.length; i++) {
+      var m = todayMuts[i];
+      if (m.type === "in") kasMasuk += m.amount;
+      if (m.type === "out") kasKeluar += m.amount;
+      if (m.type === "topup") topups.push(m);
+      if (m.type === "tarik") tariks.push(m);
+    }
+
+    var totalLaba = 0;
+    var penjualan = 0;
+    var piutang = 0;
+    for (var i = 0; i < todayTxs.length; i++) {
+      var t = todayTxs[i];
+      totalLaba += (t.profit || 0);
+      penjualan += (t.total || 0);
+      if (t.payment_method === "credit") piutang += (t.total || 0);
+    }
+
+    var topupAmount = 0;
+    var tarikAmount = 0;
+    var totalFee = 0;
+    for (var i = 0; i < topups.length; i++) { topupAmount += topups[i].amount; totalFee += (topups[i].fee || 0); }
+    for (var i = 0; i < tariks.length; i++) { tarikAmount += tariks[i].amount; totalFee += (tariks[i].fee || 0); }
 
     return {
       modal_awal: this.current ? (this.current.modal_awal || 0) : 0,
       total_transaksi: todayTxs.length,
-      total_laba: todayTxs.reduce(function(s, t) { return s + (t.profit || 0); }, 0),
+      total_laba: totalLaba,
       uang_masuk: kasMasuk,
       uang_keluar: kasKeluar,
-      penjualan_produk: todayTxs.reduce(function(s, t) { return s + t.total; }, 0),
-      topup: topups.reduce(function(s, m) { return s + m.amount; }, 0),
-      tarik_tunai: tariks.reduce(function(s, m) { return s + m.amount; }, 0),
-      total_admin_fee: topups.concat(tariks).reduce(function(s, m) { return s + (m.fee || 0); }, 0),
-      piutang_customer: todayTxs.filter(function(t) { return t.payment_method === "credit"; }).reduce(function(s, t) { return s + t.total; }, 0)
+      penjualan_produk: penjualan,
+      topup: topupAmount,
+      tarik_tunai: tarikAmount,
+      total_admin_fee: totalFee,
+      piutang_customer: piutang
     };
   }
 }
