@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0ea5e9">
-  <title>Dashboard — WebPOS</title>
+  <title>Dashboard — POS</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -128,7 +128,7 @@
     }
 
     /* ============================================
-       SIDEBAR — Modern Pill Navigation
+       SIDEBAR
        ============================================ */
     .sidebar {
       position: fixed;
@@ -301,6 +301,8 @@
       display: flex;
       align-items: center;
       gap: var(--space-4);
+      flex: 1;
+      min-width: 0;
     }
 
     .shift-pulse {
@@ -309,6 +311,7 @@
       border-radius: 50%;
       background: var(--success);
       position: relative;
+      flex-shrink: 0;
     }
 
     .shift-pulse::after {
@@ -331,6 +334,10 @@
       opacity: 0;
     }
 
+    .shift-text {
+      min-width: 0;
+    }
+
     .shift-text .label {
       font-size: 12px;
       color: var(--text-muted);
@@ -344,6 +351,7 @@
       font-weight: 700;
       color: var(--text);
       margin-top: 2px;
+      word-break: break-word;
     }
 
     /* Toggle Switch */
@@ -353,6 +361,7 @@
       height: 34px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
     }
 
     .toggle-switch input {
@@ -381,9 +390,6 @@
       border-radius: 50%;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .toggle-switch input:checked + .toggle-slider {
@@ -429,7 +435,7 @@
     }
 
     /* ============================================
-       STATS GRID — Modern Cards with Icons
+       STATS GRID
        ============================================ */
     .stats-grid {
       display: grid;
@@ -531,6 +537,8 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: var(--space-6);
+      flex-wrap: wrap;
+      gap: var(--space-2);
     }
 
     .section-title {
@@ -709,7 +717,7 @@
     }
 
     /* ============================================
-       MODULE GRID — MODERN REVISION
+       MODULE GRID — MODERN
        ============================================ */
     .module-grid {
       display: grid;
@@ -934,7 +942,7 @@
     }
 
     /* ============================================
-       RESPONSIVE
+       RESPONSIVE — MOBILE OPTIMIZED
        ============================================ */
     @media (max-width: 1200px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -963,15 +971,32 @@
         transform: translateX(0);
       }
 
-      .stats-grid { grid-template-columns: 1fr; }
-      .cash-grid { grid-template-columns: 1fr; }
-      .bento-grid { grid-template-columns: repeat(2, 1fr); }
-      .module-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+      .stat-card { padding: var(--space-4); }
+      .stat-card .stat-icon { width: 40px; height: 40px; font-size: 20px; }
+      .stat-card .stat-value { font-size: 22px; }
+
+      .cash-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+      .cash-item { padding: var(--space-4); }
+      .cash-item .cash-val { font-size: 16px; }
+
+      .bento-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+      .bento-item { padding: var(--space-4); }
+      .bento-item .bento-icon { width: 36px; height: 36px; font-size: 18px; }
+
+      .module-grid { grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+      .module-item { padding: var(--space-4) var(--space-3); }
+      .module-item .module-icon { width: 44px; height: 44px; font-size: 22px; }
+      .module-item .module-name { font-size: 12px; }
 
       .shift-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-4);
+        flex-direction: row;
+        align-items: center;
+        padding: var(--space-4);
+      }
+
+      .shift-text .value {
+        font-size: 14px;
       }
 
       .page-header h1 {
@@ -983,23 +1008,47 @@
         right: -50px;
       }
 
+      .total-cash-hero {
+        padding: var(--space-5);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+      }
+
       .total-cash-hero .total-value {
-        font-size: 26px;
+        font-size: 28px;
       }
 
       .total-cash-hero .total-formula {
         max-width: 100%;
         font-size: 11px;
       }
+
+      .section-card {
+        padding: var(--space-4);
+      }
+
+      .modal-box {
+        max-width: calc(100vw - 32px);
+      }
     }
 
     @media (max-width: 480px) {
-      .bento-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .cash-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento-grid { grid-template-columns: repeat(2, 1fr); }
       .module-grid { grid-template-columns: repeat(2, 1fr); }
-      .total-cash-hero {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-3);
+
+      .shift-bar {
+        flex-wrap: wrap;
+      }
+
+      .shift-info {
+        width: 100%;
+      }
+
+      .total-cash-hero .total-value {
+        font-size: 24px;
       }
     }
   </style>
@@ -1465,6 +1514,11 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <!-- Services -->
   <script src="js/core/firebase-config.js"></script>
   <script src="js/services/setting-service.js"></script>
@@ -1478,79 +1532,80 @@
 
   <script>
     /* ===== UTILS ===== */
-    const fmt = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+    function fmt(n) {
+      return "Rp " + Number(n || 0).toLocaleString("id-ID");
+    }
 
     function openModal(id) {
-      document.getElementById(id).classList.add('active');
-      document.body.style.overflow = 'hidden';
+      document.getElementById(id).classList.add("active");
+      document.body.style.overflow = "hidden";
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.remove('active');
-      document.body.style.overflow = '';
+      document.getElementById(id).classList.remove("active");
+      document.body.style.overflow = "";
     }
 
     /* ===== SIDEBAR ===== */
     function toggleSidebar() {
-      const sb = document.getElementById('sidebar');
-      const ov = document.getElementById('sidebar-overlay');
-      const isMobile = window.innerWidth <= 768;
+      var sb = document.getElementById("sidebar");
+      var ov = document.getElementById("sidebar-overlay");
+      var isMobile = window.innerWidth <= 768;
 
       if (isMobile) {
-        sb.classList.toggle('show-mobile');
-        ov.classList.toggle('active');
+        sb.classList.toggle("show-mobile");
+        ov.classList.toggle("active");
       } else {
-        const isCollapsed = sb.style.width === '72px';
-        sb.style.width = isCollapsed ? '280px' : '72px';
-        document.querySelector('.main').style.marginLeft = isCollapsed ? '280px' : '72px';
+        var isCollapsed = sb.style.width === "72px";
+        sb.style.width = isCollapsed ? "280px" : "72px";
+        document.querySelector(".main").style.marginLeft = isCollapsed ? "280px" : "72px";
 
-        document.querySelectorAll('.nav-item span:last-child').forEach(el => {
-          el.style.display = isCollapsed ? 'block' : 'none';
-        });
-        document.querySelectorAll('.nav-section-title').forEach(el => {
-          el.style.display = isCollapsed ? 'block' : 'none';
-        });
+        var navTexts = document.querySelectorAll(".nav-item span:last-child");
+        for (var i = 0; i < navTexts.length; i++) {
+          navTexts[i].style.display = isCollapsed ? "block" : "none";
+        }
+        var navTitles = document.querySelectorAll(".nav-section-title");
+        for (var i = 0; i < navTitles.length; i++) {
+          navTitles[i].style.display = isCollapsed ? "block" : "none";
+        }
       }
     }
 
     /* ===== NOTIF ===== */
     function toggleNotif() {
-      document.getElementById('notif-panel').classList.toggle('active');
+      document.getElementById("notif-panel").classList.toggle("active");
     }
 
     function addNotif(text) {
-      const list = document.getElementById('notif-list');
-      const count = document.getElementById('notif-count');
+      var list = document.getElementById("notif-list");
+      var count = document.getElementById("notif-count");
 
-      if (list.querySelector('.notif-empty')) list.innerHTML = '';
+      if (list.querySelector(".notif-empty")) list.innerHTML = "";
 
-      const div = document.createElement('div');
-      div.className = 'notif-item animate-slide-in';
-      div.innerHTML = `
-        <div>${text}</div>
-        <div class="notif-time">${new Date().toLocaleTimeString('id-ID')}</div>
-      `;
+      var div = document.createElement("div");
+      div.className = "notif-item animate-slide-in";
+      div.innerHTML = "<div>" + text + "</div><div class=\"notif-time\">" + new Date().toLocaleTimeString("id-ID") + "</div>";
       list.prepend(div);
 
-      count.style.display = 'flex';
+      count.style.display = "flex";
       count.textContent = list.children.length;
     }
 
     /* ===== THEME ===== */
     function toggleDarkMode() {
-      const isDark = document.body.classList.toggle('dark-mode');
+      var isDark = document.body.classList.toggle("dark-mode");
       window.settingService.setDarkMode(isDark);
-      document.getElementById('btn-theme').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById("btn-theme").textContent = isDark ? "☀️" : "🌙";
     }
 
     /* ===== PROFILE ===== */
     function toggleProfile() {
-      const user = window.userService.getCurrent();
-      alert(`👤 ${user.name}\n🏷️ Role: ${user.role}\n🕐 Login: ${new Date().toLocaleString('id-ID')}`);
+      var user = window.userService.getCurrent();
+      alert("👤 " + user.name + "\n🏷️ Role: " + user.role + "\n🕐 Login: " + new Date().toLocaleString("id-ID"));
     }
 
     function logout() {
-      if (confirm('Yakin ingin logout?')) {
+      if (confirm("Yakin ingin logout?")) {
         window.userService.logout();
         location.reload();
       }
@@ -1559,39 +1614,36 @@
     /* ===== SHIFT TOGGLE ===== */
     function handleShiftToggle(el) {
       if (el.checked) {
-        // Mau buka shift
-        openModal('modal-shift-open');
+        openModal("modal-shift-open");
       } else {
-        // Mau tutup shift
-        openModal('modal-shift-close');
+        openModal("modal-shift-close");
       }
-      // Reset checkbox — nanti di-update oleh renderDashboard setelah konfirmasi
       el.checked = !el.checked;
     }
 
     /* ===== RENDER DASHBOARD ===== */
     function renderDashboard() {
-      const summary = window.cashService.getDailySummary();
+      var summary = window.cashService.getDailySummary();
 
       // Stats
-      document.getElementById('stat-modal').textContent = fmt(summary.modal_awal);
-      document.getElementById('stat-transaksi').textContent = summary.total_transaksi;
-      document.getElementById('stat-laba').textContent = fmt(summary.total_laba);
-      document.getElementById('stat-piutang').textContent = fmt(summary.piutang_customer);
+      document.getElementById("stat-modal").textContent = fmt(summary.modal_awal);
+      document.getElementById("stat-transaksi").textContent = summary.total_transaksi;
+      document.getElementById("stat-laba").textContent = fmt(summary.total_laba);
+      document.getElementById("stat-piutang").textContent = fmt(summary.piutang_customer);
 
       // Cash detail
-      document.getElementById('cash-modal').textContent = fmt(summary.modal_awal);
-      document.getElementById('cash-masuk').textContent = fmt(summary.uang_masuk);
-      document.getElementById('cash-keluar').textContent = fmt(summary.uang_keluar);
-      document.getElementById('cash-penjualan').textContent = fmt(summary.penjualan_produk);
-      document.getElementById('cash-topup').textContent = fmt(summary.topup);
-      document.getElementById('cash-tarik').textContent = fmt(summary.tarik_tunai);
-      document.getElementById('cash-fee').textContent = fmt(summary.total_admin_fee);
-      document.getElementById('cash-piutang').textContent = fmt(summary.piutang_customer);
-      document.getElementById('last-update').textContent = 'Diperbarui ' + new Date().toLocaleTimeString('id-ID');
+      document.getElementById("cash-modal").textContent = fmt(summary.modal_awal);
+      document.getElementById("cash-masuk").textContent = fmt(summary.uang_masuk);
+      document.getElementById("cash-keluar").textContent = fmt(summary.uang_keluar);
+      document.getElementById("cash-penjualan").textContent = fmt(summary.penjualan_produk);
+      document.getElementById("cash-topup").textContent = fmt(summary.topup);
+      document.getElementById("cash-tarik").textContent = fmt(summary.tarik_tunai);
+      document.getElementById("cash-fee").textContent = fmt(summary.total_admin_fee);
+      document.getElementById("cash-piutang").textContent = fmt(summary.piutang_customer);
+      document.getElementById("last-update").textContent = "Diperbarui " + new Date().toLocaleTimeString("id-ID");
 
       // Total Uang — rumus lengkap
-      const totalUang = 
+      var totalUang = 
         (summary.modal_awal || 0) 
         + (summary.uang_masuk || 0) 
         - (summary.uang_keluar || 0) 
@@ -1600,173 +1652,183 @@
         + (summary.topup || 0) 
         + (summary.total_admin_fee || 0) 
         - (summary.tarik_tunai || 0);
-      document.getElementById('total-uang').textContent = fmt(totalUang);
+      document.getElementById("total-uang").textContent = fmt(totalUang);
 
       // Shift status
-      const current = window.cashService.current;
-      const pulse = document.getElementById('shift-pulse');
-      const text = document.getElementById('shift-text');
-      const navShift = document.getElementById('nav-shift-status');
-      const toggle = document.getElementById('shift-toggle');
+      var current = window.cashService.current;
+      var pulse = document.getElementById("shift-pulse");
+      var text = document.getElementById("shift-text");
+      var navShift = document.getElementById("nav-shift-status");
+      var toggle = document.getElementById("shift-toggle");
 
       if (current) {
-        pulse.classList.remove('closed');
-        text.textContent = `Shift Aktif — ${current.kasirName || 'Kasir'} · Modal ${fmt(current.modal_awal)}`;
-        navShift.style.display = 'inline-flex';
-        navShift.textContent = 'SHIFT AKTIF';
+        pulse.classList.remove("closed");
+        text.textContent = "Shift Aktif — " + (current.kasirName || "Kasir") + " · Modal " + fmt(current.modal_awal);
+        navShift.style.display = "inline-flex";
+        navShift.textContent = "SHIFT AKTIF";
         toggle.checked = true;
       } else {
-        pulse.classList.add('closed');
-        text.textContent = 'Shift Tutup — Aktifkan untuk memulai transaksi';
-        navShift.style.display = 'none';
+        pulse.classList.add("closed");
+        text.textContent = "Shift Tutup — Aktifkan untuk memulai transaksi";
+        navShift.style.display = "none";
         toggle.checked = false;
       }
 
       // User info
-      const user = window.userService.getCurrent();
-      document.getElementById('nav-user-name').textContent = user.name || 'Kasir';
-      document.getElementById('nav-user-role').textContent = (user.role || 'KASIR').toUpperCase();
+      var user = window.userService.getCurrent();
+      document.getElementById("nav-user-name").textContent = user.name || "Kasir";
+      document.getElementById("nav-user-role").textContent = (user.role || "KASIR").toUpperCase();
     }
 
     /* ===== ACTIONS ===== */
-    async function confirmOpenShift() {
-      const val = parseFloat(document.getElementById('input-modal-awal').value) || 0;
-      const user = window.userService.getCurrent();
-      await window.cashService.openShift(val, user.name);
-      addNotif(`✅ Shift dibuka oleh ${user.name} dengan modal ${fmt(val)}`);
-      closeModal('modal-shift-open');
-      renderDashboard();
-    }
-
-    async function confirmCloseShift() {
-      const shift = await window.cashService.closingShift();
-      addNotif(`🔒 Shift ditutup. Penjualan: ${fmt(shift.summary?.penjualan_produk || 0)} · Laba: ${fmt(shift.summary?.total_laba || 0)}`);
-      closeModal('modal-shift-close');
-      renderDashboard();
-    }
-
-    async function confirmTransfer() {
-      const targetId = document.getElementById('select-transfer-user').value;
-      if (!targetId) return alert('Pilih user tujuan terlebih dahulu');
-
-      const result = await window.cashService.transferShift(targetId, window.userService);
-      if (result.success) {
-        addNotif(`🔀 Shift ditransfer ke ${result.targetName} · Modal baru: ${fmt(result.modal)}`);
-        closeModal('modal-transfer');
+    function confirmOpenShift() {
+      var val = parseFloat(document.getElementById("input-modal-awal").value) || 0;
+      var user = window.userService.getCurrent();
+      window.cashService.openShift(val, user.name).then(function() {
+        addNotif("✅ Shift dibuka oleh " + user.name + " dengan modal " + fmt(val));
+        closeModal("modal-shift-open");
         renderDashboard();
-      } else {
-        alert('❌ ' + result.error);
-      }
+      });
     }
 
-    async function confirmSetModal() {
-      const val = parseFloat(document.getElementById('input-set-modal').value) || 0;
-      await window.cashService.setModalAwal(val);
-      addNotif(`💵 Modal awal diperbarui: ${fmt(val)}`);
-      closeModal('modal-set-modal');
-      renderDashboard();
-    }
-
-    async function confirmKasMasuk() {
-      const val = parseFloat(document.getElementById('input-kas-masuk').value) || 0;
-      const note = document.getElementById('input-kas-masuk-note').value;
-      await window.cashService.addCash(val, note);
-      addNotif(`📥 Kas masuk ${fmt(val)}${note ? ' · ' + note : ''}`);
-      closeModal('modal-kas-masuk');
-      renderDashboard();
-    }
-
-    async function confirmKasKeluar() {
-      const val = parseFloat(document.getElementById('input-kas-keluar').value) || 0;
-      const note = document.getElementById('input-kas-keluar-note').value;
-      await window.cashService.reduceCash(val, note);
-      addNotif(`📤 Kas keluar ${fmt(val)}${note ? ' · ' + note : ''}`);
-      closeModal('modal-kas-keluar');
-      renderDashboard();
-    }
-
-    async function confirmTopUp() {
-      const val = parseFloat(document.getElementById('input-topup').value) || 0;
-      const result = await window.cashService.topUp(val);
-      if (result.success) {
-        addNotif(`➕ Top up ${fmt(result.amount)} (fee ${fmt(result.fee)})`);
-        closeModal('modal-topup');
+    function confirmCloseShift() {
+      window.cashService.closingShift().then(function(shift) {
+        addNotif("🔒 Shift ditutup. Penjualan: " + fmt((shift.summary && shift.summary.penjualan_produk) || 0) + " · Laba: " + fmt((shift.summary && shift.summary.total_laba) || 0));
+        closeModal("modal-shift-close");
         renderDashboard();
-      } else {
-        alert('❌ ' + result.error);
-      }
+      });
     }
 
-    async function confirmTarik() {
-      const val = parseFloat(document.getElementById('input-tarik').value) || 0;
-      const result = await window.cashService.tarikTunai(val);
-      if (result.success) {
-        addNotif(`➖ Tarik tunai ${fmt(result.received)} (fee ${fmt(result.fee)})`);
-        closeModal('modal-tarik');
+    function confirmTransfer() {
+      var targetId = document.getElementById("select-transfer-user").value;
+      if (!targetId) return alert("Pilih user tujuan terlebih dahulu");
+
+      window.cashService.transferShift(targetId, window.userService).then(function(result) {
+        if (result.success) {
+          addNotif("🔀 Shift ditransfer ke " + result.targetName + " · Modal baru: " + fmt(result.modal));
+          closeModal("modal-transfer");
+          renderDashboard();
+        } else {
+          alert("❌ " + result.error);
+        }
+      });
+    }
+
+    function confirmSetModal() {
+      var val = parseFloat(document.getElementById("input-set-modal").value) || 0;
+      window.cashService.setModalAwal(val).then(function() {
+        addNotif("💵 Modal awal diperbarui: " + fmt(val));
+        closeModal("modal-set-modal");
         renderDashboard();
-      } else {
-        alert('❌ ' + result.error);
-      }
+      });
+    }
+
+    function confirmKasMasuk() {
+      var val = parseFloat(document.getElementById("input-kas-masuk").value) || 0;
+      var note = document.getElementById("input-kas-masuk-note").value;
+      window.cashService.addCash(val, note).then(function() {
+        addNotif("📥 Kas masuk " + fmt(val) + (note ? " · " + note : ""));
+        closeModal("modal-kas-masuk");
+        renderDashboard();
+      });
+    }
+
+    function confirmKasKeluar() {
+      var val = parseFloat(document.getElementById("input-kas-keluar").value) || 0;
+      var note = document.getElementById("input-kas-keluar-note").value;
+      window.cashService.reduceCash(val, note).then(function() {
+        addNotif("📤 Kas keluar " + fmt(val) + (note ? " · " + note : ""));
+        closeModal("modal-kas-keluar");
+        renderDashboard();
+      });
+    }
+
+    function confirmTopUp() {
+      var val = parseFloat(document.getElementById("input-topup").value) || 0;
+      window.cashService.topUp(val).then(function(result) {
+        if (result.success) {
+          addNotif("➕ Top up " + fmt(result.amount) + " (fee " + fmt(result.fee) + ")");
+          closeModal("modal-topup");
+          renderDashboard();
+        } else {
+          alert("❌ " + result.error);
+        }
+      });
+    }
+
+    function confirmTarik() {
+      var val = parseFloat(document.getElementById("input-tarik").value) || 0;
+      window.cashService.tarikTunai(val).then(function(result) {
+        if (result.success) {
+          addNotif("➖ Tarik tunai " + fmt(result.received) + " (fee " + fmt(result.fee) + ")");
+          closeModal("modal-tarik");
+          renderDashboard();
+        } else {
+          alert("❌ " + result.error);
+        }
+      });
     }
 
     /* ===== LIVE FEE PREVIEW ===== */
-    document.getElementById('input-topup').addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value) || 0;
-      const feeCfg = window.settingService.getAdminFee();
-      const fee = Math.floor(val * feeCfg.topup_percent / 100) + feeCfg.topup_flat;
-      const net = val - fee;
-      document.getElementById('topup-fee-display').textContent = fmt(fee);
-      document.getElementById('topup-net').textContent = fmt(net);
+    document.getElementById("input-topup").addEventListener("input", function(e) {
+      var val = parseFloat(e.target.value) || 0;
+      var feeCfg = window.settingService.getAdminFee();
+      var fee = Math.floor(val * feeCfg.topup_percent / 100) + feeCfg.topup_flat;
+      var net = val - fee;
+      document.getElementById("topup-fee-display").textContent = fmt(fee);
+      document.getElementById("topup-net").textContent = fmt(net);
     });
 
-    document.getElementById('input-tarik').addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value) || 0;
-      const feeCfg = window.settingService.getAdminFee();
-      const fee = Math.floor(val * feeCfg.tarik_percent / 100) + feeCfg.tarik_flat;
-      const total = val + fee;
-      document.getElementById('tarik-fee-display').textContent = fmt(fee);
-      document.getElementById('tarik-total').textContent = fmt(total);
+    document.getElementById("input-tarik").addEventListener("input", function(e) {
+      var val = parseFloat(e.target.value) || 0;
+      var feeCfg = window.settingService.getAdminFee();
+      var fee = Math.floor(val * feeCfg.tarik_percent / 100) + feeCfg.tarik_flat;
+      var total = val + fee;
+      document.getElementById("tarik-fee-display").textContent = fmt(fee);
+      document.getElementById("tarik-total").textContent = fmt(total);
     });
 
     /* ===== INIT ===== */
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener("DOMContentLoaded", function() {
       // Theme
-      const theme = window.settingService.getTheme();
+      var theme = window.settingService.getTheme();
       window.settingService.applyTheme(theme);
       if (window.settingService.getDarkMode()) {
-        document.body.classList.add('dark-mode');
-        document.getElementById('btn-theme').textContent = '☀️';
+        document.body.classList.add("dark-mode");
+        document.getElementById("btn-theme").textContent = "☀️";
       }
 
       // Transfer dropdown
-      window.userService.getAll().then(users => {
-        const sel = document.getElementById('select-transfer-user');
-        const current = window.userService.getCurrent();
-        users.filter(u => u.id !== current.id).forEach(u => {
-          const opt = document.createElement('option');
-          opt.value = u.id;
-          opt.textContent = `${u.name} (${u.role})`;
-          sel.appendChild(opt);
-        });
+      window.userService.getAll().then(function(users) {
+        var sel = document.getElementById("select-transfer-user");
+        var current = window.userService.getCurrent();
+        for (var i = 0; i < users.length; i++) {
+          if (users[i].id !== current.id) {
+            var opt = document.createElement("option");
+            opt.value = users[i].id;
+            opt.textContent = users[i].name + " (" + users[i].role + ")";
+            sel.appendChild(opt);
+          }
+        }
       });
 
       // Render
       renderDashboard();
 
       // Event listeners
-      window.addEventListener('transaction:completed', () => {
+      window.addEventListener("transaction:completed", function() {
         renderDashboard();
-        addNotif('🧾 Transaksi baru berhasil tercatat');
+        addNotif("🧾 Transaksi baru berhasil tercatat");
       });
 
       // Greeting
-      const hour = new Date().getHours();
-      let greet = 'Selamat malam';
-      if (hour < 11) greet = 'Selamat pagi';
-      else if (hour < 15) greet = 'Selamat siang';
-      else if (hour < 18) greet = 'Selamat sore';
-      document.getElementById('greeting-text').textContent = 
-        `${greet}, ${window.userService.getCurrent().name || 'Kasir'}. Siap melayani hari ini?`;
+      var hour = new Date().getHours();
+      var greet = "Selamat malam";
+      if (hour < 11) greet = "Selamat pagi";
+      else if (hour < 15) greet = "Selamat siang";
+      else if (hour < 18) greet = "Selamat sore";
+      document.getElementById("greeting-text").textContent = 
+        greet + ", " + (window.userService.getCurrent().name || "Kasir") + ". Siap melayani hari ini?";
     });
   </script>
 </body>
