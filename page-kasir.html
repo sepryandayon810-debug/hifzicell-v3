@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir - WebPOS</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <style>
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .product-item { padding: 16px; text-align: center; cursor: pointer; }
+    .product-item:hover { transform: translateY(-2px); }
+    .cart-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border); }
+  </style>
+</head>
+<body class="theme-ocean">
+  
+  <div style="display: flex; min-height: 100vh;">
+    <nav class="sidebar" style="width: 250px; padding: 20px;">
+      <h2 class="text-primary" style="margin-bottom: 30px;">WebPOS</h2>
+      <a href="index.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">📊 Dashboard</a>
+      <a href="page-kasir.html" class="active" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">🛒 Kasir</a>
+      <a href="page-setting.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">⚙️ Pengaturan</a>
+    </nav>
+
+    <main style="flex: 1; padding: 30px;">
+      <h1 style="margin-bottom: 20px;">Kasir</h1>
+
+      <!-- Produk Dummy -->
+      <div class="product-grid" id="product-list">
+        <div class="card product-item" onclick="addToCart('Kopi Latte', 18000)">
+          <div style="font-weight: 700;">Kopi Latte</div>
+          <div class="text-primary" style="margin-top: 8px;">Rp 18.000</div>
+        </div>
+        <div class="card product-item" onclick="addToCart('Teh Manis', 8000)">
+          <div style="font-weight: 700;">Teh Manis</div>
+          <div class="text-primary" style="margin-top: 8px;">Rp 8.000</div>
+        </div>
+        <div class="card product-item" onclick="addToCart('Nasi Goreng', 25000)">
+          <div style="font-weight: 700;">Nasi Goreng</div>
+          <div class="text-primary" style="margin-top: 8px;">Rp 25.000</div>
+        </div>
+      </div>
+
+      <!-- Cart -->
+      <div class="card" style="padding: 20px; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 16px;">Keranjang</h3>
+        <div id="cart-items"></div>
+        <div style="margin-top: 16px; font-size: 20px; font-weight: 700; text-align: right;">
+          Total: <span class="text-primary" id="cart-total">Rp 0</span>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="card" style="padding: 20px;">
+        <h3 style="margin-bottom: 16px;">Pembayaran</h3>
+        <select id="payment-method" class="input" style="margin-bottom: 12px; max-width: 300px;">
+          <option value="cash">Cash</option>
+          <option value="transfer">Transfer</option>
+          <option value="credit">Hutang</option>
+        </select>
+        <br>
+        <button class="btn-primary" onclick="processTransaction()">💰 Bayar & Cetak Struk</button>
+        <button class="btn-primary" onclick="processTransaction(true)" style="background: var(--info); margin-left: 8px;">💾 Bayar Saja</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/services/setting-service.js"></script>
+  <script src="js/services/transaction-service.js"></script>
+  <script src="js/services/cash-service.js"></script>
+  <script src="js/services/debt-service.js"></script>
+  <script src="js/services/printer-service.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let cart = [];
+
+    function addToCart(name, price) {
+      const existing = cart.find(i => i.name === name);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ name, price, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items');
+      container.innerHTML = '';
+      let total = 0;
+
+      cart.forEach((item, idx) => {
+        total += item.price * item.qty;
+        container.innerHTML += `
+          <div class="cart-item">
+            <span>${item.name} (${item.qty}x)</span>
+            <span>Rp ${(item.price * item.qty).toLocaleString('id-ID')}</span>
+          </div>
+        `;
+      });
+
+      document.getElementById('cart-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    async function processTransaction(skipPrint = false) {
+      if (cart.length === 0) return alert('Keranjang kosong');
+
+      const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+      const method = document.getElementById('payment-method').value;
+
+      try {
+        // UI hanya kirim data, logic di transaction_service
+        const tx = window.transactionService.process({
+          items: cart,
+          total: total,
+          payment_method: method,
+          profit: total * 0.3 // dummy profit
+        });
+
+        // Print manual jika diminta (dan tidak skip)
+        if (!skipPrint) {
+          const printerCfg = window.settingService.getPrinterConfig();
+          if (!window.printerService.isConnected) {
+            alert('Printer belum terhubung. Hubungkan di Pengaturan.');
+          } else {
+            await window.printerService.printReceipt(tx);
+          }
+        }
+
+        alert('Transaksi berhasil: ' + tx.id);
+        cart = [];
+        renderCart();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
