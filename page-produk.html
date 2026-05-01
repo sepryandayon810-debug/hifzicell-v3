@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Produk — KasiRin</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    .app { display:flex; min-height:100vh; }
+
+    /* HEADER */
+    .header {
+      position:fixed; top:0; left:0; right:0; height:64px;
+      background:rgba(var(--primary-rgb),0.08);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 24px; z-index:1000;
+    }
+    .header-brand { display:flex; align-items:center; gap:12px; }
+    .header-brand .logo {
+      width:36px; height:36px; background:var(--gradient-primary);
+      border-radius:10px; display:flex; align-items:center; justify-content:center;
+      color:#fff; font-size:18px;
+    }
+    .header-brand .title { font-weight:800; font-size:18px; background:var(--gradient-primary); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .header-actions { display:flex; gap:8px; }
+    .header-btn {
+      width:40px; height:40px; border-radius:50%; border:none;
+      background:transparent; color:var(--text-secondary);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:16px;
+    }
+    .header-btn:hover { background:var(--primary-light); color:var(--primary); }
+
+    /* SIDEBAR */
+    .sidebar {
+      position:fixed; top:64px; left:0; width:260px;
+      height:calc(100vh - 64px); background:var(--surface);
+      border-right:1px solid var(--border); padding:16px;
+      overflow-y:auto; z-index:900;
+    }
+    .nav-section { margin-bottom:24px; }
+    .nav-section-title {
+      font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:1px; color:var(--text-muted); margin-bottom:12px; padding-left:12px;
+    }
+    .nav-item {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 12px; border-radius:10px;
+      color:var(--text-secondary); text-decoration:none;
+      font-size:14px; font-weight:500; margin-bottom:2px;
+      transition:all 0.15s; border:none; background:none; width:100%; text-align:left; cursor:pointer;
+      position:relative;
+    }
+    .nav-item::before {
+      content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+      width:3px; height:0; background:var(--gradient-primary); border-radius:0 4px 4px 0;
+      transition:height 0.25s;
+    }
+    .nav-item:hover { background:var(--surface-hover); color:var(--text); }
+    .nav-item.active { background:var(--primary-light); color:var(--primary); font-weight:600; }
+    .nav-item.active::before { height:60%; }
+    .nav-item .icon { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .nav-footer { margin-top:auto; padding:16px; background:var(--bg); border-radius:14px; border:1px solid var(--border-light); }
+    .nav-footer .user-name { font-weight:700; font-size:13px; color:var(--text); }
+    .nav-footer .user-role { font-size:11px; color:var(--text-muted); text-transform:uppercase; }
+
+    /* MAIN */
+    .main { flex:1; margin-left:260px; margin-top:64px; padding:32px; }
+
+    /* PAGE HEADER */
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+    .page-header h1 { font-size:28px; font-weight:800; }
+    .btn-add {
+      padding:12px 20px; border-radius:12px; border:none;
+      background:var(--gradient-primary); color:#fff; font-size:14px; font-weight:700;
+      cursor:pointer; display:flex; align-items:center; gap:8px;
+      box-shadow:var(--shadow-glow); transition:all 0.2s;
+    }
+    .btn-add:hover { transform:translateY(-2px); }
+
+    /* TOOLBAR */
+    .toolbar {
+      display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;
+    }
+    .search-box { position:relative; flex:1; min-width:240px; max-width:400px; }
+    .search-box input {
+      width:100%; padding:10px 14px 10px 40px;
+      border-radius:12px; border:1.5px solid var(--border);
+      background:var(--bg); color:var(--text); font-size:14px;
+    }
+    .search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); }
+    .filter-select {
+      padding:10px 14px; border-radius:12px; border:1.5px solid var(--border);
+      background:var(--bg); color:var(--text); font-size:14px; cursor:pointer;
+    }
+
+    /* PRODUCT GRID */
+    .product-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:20px;
+    }
+    .product-card {
+      background:var(--card); border:1.5px solid var(--border);
+      border-radius:20px; overflow:hidden; transition:all 0.25s;
+    }
+    .product-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary); }
+    .product-card .img-wrap {
+      width:100%; height:140px; background:var(--bg);
+      display:flex; align-items:center; justify-content:center; font-size:48px;
+      position:relative;
+    }
+    .product-card .badge-stock {
+      position:absolute; top:10px; right:10px;
+      padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700;
+    }
+    .badge-stock.ok { background:var(--success-light); color:var(--success); }
+    .badge-stock.low { background:var(--warning-light); color:var(--warning); }
+    .badge-stock.empty { background:var(--danger-light); color:var(--danger); }
+    .product-card .info { padding:16px; }
+    .product-card .name { font-size:15px; font-weight:700; margin-bottom:4px; }
+    .product-card .price { font-size:18px; font-weight:800; color:var(--primary); margin-bottom:8px; }
+    .product-card .meta { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
+    .product-card .actions { display:flex; gap:8px; }
+    .product-card .actions button {
+      flex:1; padding:8px; border-radius:10px; border:none;
+      font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;
+    }
+    .btn-edit { background:var(--info-light); color:var(--info); }
+    .btn-edit:hover { background:var(--info); color:#fff; }
+    .btn-delete { background:var(--danger-light); color:var(--danger); }
+    .btn-delete:hover { background:var(--danger); color:#fff; }
+
+    /* MODAL */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.5); backdrop-filter:blur(8px);
+      z-index:2000; align-items:center; justify-content:center; padding:16px;
+    }
+    .modal-overlay.active { display:flex; }
+    .modal-box {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:20px; width:100%; max-width:480px;
+      max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-xl);
+    }
+    .modal-header { padding:24px 24px 16px; display:flex; justify-content:space-between; align-items:center; }
+    .modal-header h3 { font-size:18px; font-weight:700; }
+    .modal-body { padding:0 24px 16px; }
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+    .form-input {
+      width:100%; padding:12px 14px; border-radius:12px;
+      border:1.5px solid var(--border); background:var(--bg); color:var(--text); font-size:14px;
+    }
+    .form-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(var(--primary-rgb),0.1); }
+    .modal-footer { padding:16px 24px 24px; display:flex; gap:12px; justify-content:flex-end; }
+    .btn { padding:10px 20px; border-radius:12px; border:none; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn-primary { background:var(--gradient-primary); color:#fff; }
+    .btn-secondary { background:var(--bg); color:var(--text-secondary); border:1.5px solid var(--border); }
+
+    /* TOAST */
+    .toast-container { position:fixed; top:80px; right:16px; z-index:3000; display:flex; flex-direction:column; gap:12px; }
+    .toast {
+      padding:14px 20px; border-radius:12px; background:var(--surface);
+      border:1px solid var(--border); box-shadow:var(--shadow-xl);
+      display:flex; align-items:center; gap:12px; font-size:14px; font-weight:500;
+      transform:translateX(120%); transition:transform 0.3s;
+    }
+    .toast.show { transform:translateX(0); }
+    .toast.success { border-left:4px solid var(--success); }
+    .toast.error { border-left:4px solid var(--danger); }
+
+    /* EMPTY STATE */
+    .empty-state { text-align:center; padding:80px 20px; color:var(--text-muted); grid-column:1/-1; }
+    .empty-state i { font-size:64px; margin-bottom:16px; opacity:0.3; }
+
+    @media (max-width:768px) {
+      .sidebar { transform:translateX(-100%); width:280px; }
+      .sidebar.show-mobile { transform:translateX(0); }
+      .main { margin-left:0; padding:20px; }
+      .product-grid { grid-template-columns:repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body class="theme-ocean">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <button class="header-btn" onclick="toggleSidebar()" style="margin-right:4px;"><i class="fas fa-bars"></i></button>
+      <div class="logo"><i class="fas fa-store"></i></div>
+      <span class="title">KasiRin</span>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+      <button class="header-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="nav-section">
+      <div class="nav-section-title">Menu Utama</div>
+      <a href="index.html" class="nav-item"><span class="icon"><i class="fas fa-chart-line"></i></span><span>Dashboard</span></a>
+      <a href="page-kasir.html" class="nav-item"><span class="icon"><i class="fas fa-cash-register"></i></span><span>Kasir</span></a>
+      <a href="page-produk.html" class="nav-item active"><span class="icon"><i class="fas fa-box"></i></span><span>Produk</span></a>
+      <a href="page-pembelian.html" class="nav-item"><span class="icon"><i class="fas fa-cart-arrow-down"></i></span><span>Pembelian</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Keuangan</div>
+      <a href="page-hutang.html" class="nav-item"><span class="icon"><i class="fas fa-credit-card"></i></span><span>Hutang / Piutang</span></a>
+      <a href="page-laporan.html" class="nav-item"><span class="icon"><i class="fas fa-chart-bar"></i></span><span>Laporan</span></a>
+      <a href="page-kas-management.html" class="nav-item"><span class="icon"><i class="fas fa-wallet"></i></span><span>Manajemen Kas</span></a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Sistem</div>
+      <a href="page-setting.html" class="nav-item"><span class="icon"><i class="fas fa-cog"></i></span><span>Pengaturan</span></a>
+    </div>
+    <div class="nav-footer" style="margin-top:32px;">
+      <div class="user-name" id="nav-user-name">Kasir</div>
+      <div class="user-role" id="nav-user-role">KASIR</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Manajemen Produk</h1>
+        <p style="color:var(--text-secondary); font-size:14px;">Kelola inventori, stok, dan harga produk</p>
+      </div>
+      <button class="btn-add" onclick="openProductModal()"><i class="fas fa-plus"></i> Tambah Produk</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-produk" placeholder="Cari nama produk..." oninput="renderProducts()">
+      </div>
+      <select class="filter-select" id="filter-kategori" onchange="renderProducts()">
+        <option value="all">Semua Kategori</option>
+        <option value="makanan">Makanan</option>
+        <option value="minuman">Minuman</option>
+        <option value="snack">Snack</option>
+        <option value="rokok">Rokok</option>
+        <option value="pulsa">Pulsa</option>
+        <option value="lainnya">Lainnya</option>
+      </select>
+    </div>
+
+    <div class="product-grid" id="product-grid">
+      <div class="empty-state"><i class="fas fa-box-open"></i><p>Memuat produk...</p></div>
+    </div>
+  </main>
+
+  <!-- MODAL: TAMBAH/EDIT PRODUK -->
+  <div class="modal-overlay" id="modal-produk">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title"><i class="fas fa-plus-circle"></i> Tambah Produk</h3>
+        <button class="header-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="prod-id">
+        <div class="form-group">
+          <label class="form-label">Nama Produk</label>
+          <input type="text" class="form-input" id="prod-name" placeholder="Contoh: Nasi Goreng">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select class="form-input" id="prod-category">
+            <option value="makanan">Makanan</option>
+            <option value="minuman">Minuman</option>
+            <option value="snack">Snack</option>
+            <option value="rokok">Rokok</option>
+            <option value="pulsa">Pulsa</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Harga Jual (Rp)</label>
+            <input type="number" class="form-input" id="prod-price" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stok</label>
+            <input type="number" class="form-input" id="prod-stock" placeholder="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gambar (Emoji atau URL)</label>
+          <input type="text" class="form-input" id="prod-image" placeholder="🍛 atau https://...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" onclick="saveProduct()"><i class="fas fa-save"></i> Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="js/core/firebase-config.js"></script>
+
+  <script>
+    var products = [];
+    var editingId = null;
+
+    function fmt(n){ return 'Rp '+Number(n||0).toLocaleString('id-ID'); }
+
+    function showToast(msg,type){
+      type=type||'success';
+      var t=document.createElement('div'); t.className='toast '+type;
+      var icon=type==='success'?'fa-check-circle':type==='error'?'fa-times-circle':'fa-info-circle';
+      t.innerHTML='<i class="fas '+icon+'"></i><span>'+msg+'</span>';
+      document.getElementById('toast-container').appendChild(t);
+      setTimeout(function(){t.classList.add('show');},10);
+      setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},3000);
+    }
+
+    function toggleSidebar(){
+      var sb=document.getElementById('sidebar');
+      sb.classList.toggle('show-mobile');
+    }
+
+    function toggleTheme(){
+      var isDark=document.body.classList.toggle('dark-mode');
+      document.querySelector('.header-btn i.fa-moon').className=isDark?'fas fa-sun':'fas fa-moon';
+    }
+
+    function logout(){
+      if(confirm('Yakin logout?')){ auth.signOut(); location.href='login.html'; }
+    }
+
+    function openModal(){ document.getElementById('modal-produk').classList.add('active'); document.body.style.overflow='hidden'; }
+    function closeModal(){ document.getElementById('modal-produk').classList.remove('active'); document.body.style.overflow=''; editingId=null; clearForm(); }
+
+    function clearForm(){
+      document.getElementById('prod-id').value='';
+      document.getElementById('prod-name').value='';
+      document.getElementById('prod-category').value='makanan';
+      document.getElementById('prod-price').value='';
+      document.getElementById('prod-stock').value='';
+      document.getElementById('prod-image').value='';
+      document.getElementById('modal-title').innerHTML='<i class="fas fa-plus-circle"></i> Tambah Produk';
+    }
+
+    function openProductModal(id){
+      if(id){
+        editingId=id;
+        var p=products.find(function(x){return x.id===id;});
+        if(!p)return;
+        document.getElementById('modal-title').innerHTML='<i class="fas fa-edit"></i> Edit Produk';
+        document.getElementById('prod-name').value=p.name;
+        document.getElementById('prod-category').value=p.category;
+        document.getElementById('prod-price').value=p.price;
+        document.getElementById('prod-stock').value=p.stock;
+        document.getElementById('prod-image').value=p.image;
+      }
+      openModal();
+    }
+
+    function saveProduct(){
+      var name=document.getElementById('prod-name').value.trim();
+      var category=document.getElementById('prod-category').value;
+      var price=parseInt(document.getElementById('prod-price').value)||0;
+      var stock=parseInt(document.getElementById('prod-stock').value)||0;
+      var image=document.getElementById('prod-image').value.trim()||'📦';
+      if(!name){showToast('Nama produk wajib diisi!','error');return;}
+
+      var id=editingId||'PROD-'+Date.now();
+      var data={id:id,name:name,category:category,price:price,stock:stock,image:image,updatedAt:new Date().toISOString()};
+      if(!editingId)data.createdAt=new Date().toISOString();
+
+      db.ref('products/'+id).set(data).then(function(){
+        showToast(editingId?'Produk diperbarui':'Produk ditambahkan','success');
+        closeModal();
+        loadProducts();
+      }).catch(function(err){
+        showToast('Gagal: '+err.message,'error');
+      });
+    }
+
+    function deleteProduct(id){
+      if(!confirm('Hapus produk ini?'))return;
+      db.ref('products/'+id).remove().then(function(){
+        showToast('Produk dihapus','success'); loadProducts();
+      });
+    }
+
+    function loadProducts(){
+      db.ref('products').once('value').then(function(snap){
+        var data=snap.val()||{};
+        products=[];
+        for(var key in data){ if(data.hasOwnProperty(key)){ products.push({id:key,...data[key]}); } }
+        renderProducts();
+      });
+    }
+
+    function renderProducts(){
+      var grid=document.getElementById('product-grid');
+      var search=document.getElementById('search-produk').value.toLowerCase();
+      var cat=document.getElementById('filter-kategori').value;
+
+      var filtered=products.filter(function(p){
+        var matchSearch=p.name.toLowerCase().indexOf(search)!==-1;
+        var matchCat=cat==='all'||p.category===cat;
+        return matchSearch&&matchCat;
+      });
+
+      if(filtered.length===0){
+        grid.innerHTML='<div class="empty-state"><i class="fas fa-box-open"></i><p>Belum ada produk</p></div>';
+        return;
+      }
+
+      grid.innerHTML='';
+      filtered.forEach(function(p){
+        var stockClass=p.stock>20?'ok':p.stock>0?'low':'empty';
+        var stockText=p.stock>20?'Stok Aman':p.stock>0?'Stok Menipis':'Habis';
+        if(p.stock>=999){stockClass='ok';stockText='Unlimited';}
+
+        var card=document.createElement('div');
+        card.className='product-card';
+        card.innerHTML=
+          '<div class="img-wrap">'+
+            '<span style="font-size:48px;">'+p.image+'</span>'+
+            '<span class="badge-stock '+stockClass+'">'+stockText+'</span>'+
+          '</div>'+
+          '<div class="info">'+
+            '<div class="name">'+p.name+'</div>'+
+            '<div class="price">'+fmt(p.price)+'</div>'+
+            '<div class="meta">Stok: '+p.stock+' · '+p.category+'</div>'+
+            '<div class="actions">'+
+              '<button class="btn-edit" onclick="openProductModal(\''+p.id+'\')"><i class="fas fa-edit"></i> Edit</button>'+
+              '<button class="btn-delete" onclick="deleteProduct(\''+p.id+'\')"><i class="fas fa-trash"></i> Hapus</button>'+
+            '</div>'+
+          '</div>';
+        grid.appendChild(card);
+      });
+    }
+
+    /* INIT */
+    auth.onAuthStateChanged(function(user){
+      if(!user){location.href='login.html';return;}
+      db.ref('users/'+user.uid).once('value').then(function(snap){
+        var p=snap.val()||{};
+        document.getElementById('nav-user-name').textContent=p.name||'Kasir';
+        document.getElementById('nav-user-role').textContent=(p.role||'KASIR').toUpperCase();
+      });
+      loadProducts();
+    });
+  </script>
+</body>
+</html>
