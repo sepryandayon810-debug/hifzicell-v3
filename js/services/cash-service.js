@@ -127,7 +127,7 @@ class CashService {
     await db.ref('shifts/' + uid + '/current').remove();
 
     // Buka shift baru untuk target
-    var targetUser = await userService.getById(targetId);
+     var targetUser = userService.getById(targetId);
     var targetName = targetUser ? (targetUser.name || targetUser.username) : "Kasir";
     var today = new Date().toISOString().split('T')[0];
     var newShift = {
