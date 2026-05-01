@@ -43,7 +43,7 @@ class CashService {
     // Simpan ke path yang bisa di-restore di index.html
     await db.ref('shifts/' + uid + '/current').set(shift);
     // Simpan juga ke history untuk arsip
-    await db.ref('shifts_history/' + shiftId).set(shift);
+        await db.ref('shifts/' + uid + '/history/' + shiftId).set(shift);
 
     this.current = shift;
     return shift;
@@ -123,7 +123,7 @@ class CashService {
       transferTo: targetId,
       fisik_total: totalUang
     };
-    await db.ref('shifts_history/' + this.current.id).update(shiftUpdate);
+    await db.ref('shifts/' + uid + '/history/' + this.current.id).update(shiftUpdate);
     await db.ref('shifts/' + uid + '/current').remove();
 
     // Buka shift baru untuk target
@@ -168,7 +168,7 @@ class CashService {
     };
 
     // Update history
-    await db.ref('shifts_history/' + this.current.id).update(shiftUpdate);
+    await db.ref('shifts/' + uid + '/history/' + this.current.id).update(shiftUpdate);
     // Hapus current agar auto reset tidak ke-trigger lagi
     var uid = this._getUid() || "unknown";
     await db.ref('shifts/' + uid + '/current').remove();
