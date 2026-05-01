@@ -39,7 +39,7 @@ class TransactionService {
   }
 
   /* --- CORE FLOW --- */
-  process(data) {
+  async process(data) {
     this.validate(data);
 
    const transaction = {
