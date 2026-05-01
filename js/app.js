@@ -14,12 +14,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 3. Event Bus: Transaction → Debt (credit)
-  window.addEventListener('transaction:completed', (e) => {
-    const tx = e.detail;
-    if (tx.payment_method === 'credit') {
-      window.debtService.addDebt(tx);
+  window.addEventListener('transaction:completed', async (e) => {
+  const tx = e.detail;
+  if (tx.payment_method === 'credit') {
+    await window.debtService.addDebt(tx);  // ← tambah await
+  }
+});
+
+  // Offline sync: kirim antrian saat online lagi
+window.addEventListener("online", async () => {
+  const queue = JSON.parse(localStorage.getItem("webpos_sync_queue_v3") || "[]");
+  if (queue.length === 0) return;
+  
+  for (const tx of queue) {
+    try { 
+      await db.ref(`transactions/${tx.id}`).set(tx); 
     }
-  });
+    catch(err) { 
+      console.error("Sync gagal", tx.id); 
+    }
+  }
+  
+  localStorage.removeItem("webpos_sync_queue_v3");
+  alert("📡 Data offline tersinkronkan ke Firebase");
+});
 
   // 4. Event Bus: Transaction → Cash (non-credit masuk ke penjualan, dihitung di cash_service.getDailySummary)
   
