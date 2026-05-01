@@ -249,7 +249,7 @@
       <form class="login-form active" id="form-login" onsubmit="return doLogin(event)">
         <div class="form-group">
           <label class="form-label">Username</label>
-          <input type="text" class="form-input" id="login-username" placeholder="kasir01" required>
+          <input type="text" class="form-input" id="login-username" placeholder="username" required>
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
@@ -290,7 +290,7 @@
     </div>
 
     <div class="login-footer">
-      WebPOS v3 · Powered by Firebase
+      KasiRin v3 · Powered by Firebase
     </div>
   </div>
 
@@ -302,7 +302,6 @@
   <script src="js/core/firebase-config.js"></script>
 
   <script>
-    // Helper: username → fake email
     function u2e(username) {
       return username.toLowerCase().trim() + "@webpos.local";
     }
@@ -376,14 +375,7 @@
       var role = document.getElementById("reg-role").value;
       var email = u2e(username);
 
-      // Cek username sudah dipakai belum
-      db.ref("users").orderByChild("username").equalTo(username).once("value")
-        .then(function(snap) {
-          if (snap.val()) {
-            throw new Error("Username sudah dipakai");
-          }
-          return auth.createUserWithEmailAndPassword(email, password);
-        })
+      auth.createUserWithEmailAndPassword(email, password)
         .then(function(cred) {
           return db.ref("users/" + cred.user.uid).set({
             name: name,
@@ -400,13 +392,16 @@
         })
         .catch(function(err) {
           setLoading("btn-register", "register-text", false);
-          showError("Daftar gagal: " + err.message);
+          var msg = err.message;
+          if (msg.indexOf("email-already-in-use") !== -1) {
+            msg = "Username sudah dipakai";
+          }
+          showError("Daftar gagal: " + msg);
         });
 
       return false;
     }
 
-    // Kalau sudah login, langsung ke dashboard
     auth.onAuthStateChanged(function(user) {
       if (user) {
         window.location.href = "index.html";
