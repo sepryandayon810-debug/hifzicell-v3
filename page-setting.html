@@ -2,133 +2,805 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pengaturan - WebPOS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>Pengaturan — KasiRin</title>
+
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/themes.css">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    .theme-option { 
-      width: 60px; height: 60px; border-radius: 50%; cursor: pointer; 
-      border: 3px solid transparent; display: inline-block; margin: 8px;
+    :root {
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --header-h: 64px;
+      --sidebar-w: 260px;
+      --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+      --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+      --space-7: 32px;  --space-8: 40px;
+      --radius-sm: 6px;  --radius-md: 10px;  --radius-lg: 14px;
+      --radius-xl: 20px; --radius-full: 9999px;
+      --transition-fast: 0.15s ease;
+      --transition-base: 0.25s ease;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+      --shadow-xl: 0 16px 40px rgba(0,0,0,0.12);
     }
-    .theme-option.active { border-color: var(--primary); transform: scale(1.1); }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    input, button, select, textarea {
+      font-family: var(--font);
+      outline: none;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* HEADER */
+    .header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: rgba(var(--primary-rgb), 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-6);
+      z-index: 1000;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .header-brand .logo {
+      width: 36px; height: 36px;
+      background: var(--gradient-primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+    }
+    .header-brand .title {
+      font-weight: 800;
+      font-size: 18px;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .header-btn {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all var(--transition-fast);
+    }
+    .header-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      top: var(--header-h); left: 0;
+      width: var(--sidebar-w);
+      height: calc(100vh - var(--header-h));
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: var(--space-4);
+      overflow-y: auto;
+      z-index: 900;
+      transition: transform var(--transition-base);
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 899;
+      opacity: 0;
+      transition: opacity var(--transition-base);
+    }
+    .sidebar-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+    .nav-section { margin-bottom: var(--space-6); }
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+      padding-left: var(--space-3);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 10px var(--space-3);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2px;
+      transition: all var(--transition-fast);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 0;
+      background: var(--gradient-primary);
+      border-radius: 0 4px 4px 0;
+      transition: height var(--transition-base);
+    }
+    .nav-item:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .nav-item.active::before { height: 60%; }
+    .nav-item .icon {
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .nav-footer {
+      margin-top: auto;
+      padding: var(--space-4);
+      background: var(--bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+    }
+    .nav-footer .user-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .nav-footer .user-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      margin-top: var(--header-h);
+      padding: var(--space-8);
+      max-width: calc(900px + var(--sidebar-w));
+    }
+    .page-header { margin-bottom: var(--space-8); }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: var(--space-2);
+      letter-spacing: -0.5px;
+    }
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    /* CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      margin-bottom: var(--space-8);
+      box-shadow: var(--shadow-md);
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: var(--space-5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* FORM */
+    .form-group {
+      margin-bottom: var(--space-5);
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-2);
+    }
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: var(--space-2);
+    }
+    .input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      transition: all var(--transition-fast);
+    }
+    .input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    }
+    textarea.input {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* THEME SELECTOR */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--space-4);
+    }
+    .theme-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .theme-option:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .theme-option.active {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-glow);
+    }
+    .theme-option .color-ball {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      box-shadow: var(--shadow-md);
+    }
+    .theme-option .theme-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* TOGGLE SWITCH */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4) 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-info .toggle-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .toggle-info .toggle-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      cursor: pointer;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 26px;
+      transition: all 0.3s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--primary);
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-lg);
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--gradient-primary);
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; --header-h: 56px; }
+      .main { margin-left: 0; padding: var(--space-4); }
+      .sidebar { transform: translateX(-100%); width: 280px; }
+      .sidebar.show-mobile { transform: translateX(0); }
+      .theme-grid { grid-template-columns: repeat(3, 1fr); }
+      .page-header h1 { font-size: 22px; }
+    }
+    @media (max-width: 480px) {
+      .theme-grid { grid-template-columns: repeat(2, 1fr); }
+      .card { padding: var(--space-4); }
+    }
   </style>
 </head>
 <body class="theme-ocean">
-  
-  <div style="display: flex; min-height: 100vh;">
-    <nav class="sidebar" style="width: 250px; padding: 20px;">
-      <h2 class="text-primary" style="margin-bottom: 30px;">WebPOS</h2>
-      <a href="index.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">📊 Dashboard</a>
-      <a href="page-kasir.html" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">🛒 Kasir</a>
-      <a href="page-setting.html" class="active" style="display:block; padding: 12px; border-radius: 8px; margin-bottom: 8px;">⚙️ Pengaturan</a>
-    </nav>
 
-    <main style="flex: 1; padding: 30px; max-width: 800px;">
-      <h1 style="margin-bottom: 24px;">Pengaturan</h1>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <button class="header-btn" onclick="toggleSidebar()" style="margin-right:4px;"><i class="fas fa-bars"></i></button>
+      <div class="logo"><i class="fas fa-store"></i></div>
+      <span class="title">KasiRin</span>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="toggleDarkMode()" id="btn-theme"><i class="fas fa-moon"></i></button>
+      <button class="header-btn" onclick="toggleProfile()"><i class="fas fa-user"></i></button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div style="display:flex; min-height:100vh;">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="nav-section">
+        <div class="nav-section-title">Menu Utama</div>
+        <a href="index.html" class="nav-item">
+          <span class="icon"><i class="fas fa-chart-line"></i></span>
+          <span>Dashboard</span>
+        </a>
+        <a href="page-kasir.html" class="nav-item">
+          <span class="icon"><i class="fas fa-cash-register"></i></span>
+          <span>Kasir</span>
+        </a>
+        <a href="page-produk.html" class="nav-item">
+          <span class="icon"><i class="fas fa-box"></i></span>
+          <span>Produk</span>
+        </a>
+        <a href="page-pembelian.html" class="nav-item">
+          <span class="icon"><i class="fas fa-cart-arrow-down"></i></span>
+          <span>Pembelian</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Keuangan</div>
+        <a href="page-hutang.html" class="nav-item">
+          <span class="icon"><i class="fas fa-credit-card"></i></span>
+          <span>Hutang / Piutang</span>
+        </a>
+        <a href="page-laporan.html" class="nav-item">
+          <span class="icon"><i class="fas fa-chart-bar"></i></span>
+          <span>Laporan</span>
+        </a>
+        <a href="page-kas-management.html" class="nav-item">
+          <span class="icon"><i class="fas fa-wallet"></i></span>
+          <span>Manajemen Kas</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Sistem</div>
+        <a href="page-setting.html" class="nav-item active">
+          <span class="icon"><i class="fas fa-cog"></i></span>
+          <span>Pengaturan</span>
+        </a>
+        <button class="nav-item" onclick="logout()">
+          <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span>Logout</span>
+        </button>
+      </div>
+      <div class="nav-footer" style="margin-top:32px;">
+        <div class="user-name" id="nav-user-name">Kasir</div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+          <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase;" id="nav-user-role">KASIR</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="page-header">
+        <h1>⚙️ Pengaturan</h1>
+        <p>Konfigurasi global aplikasi KasiRin</p>
+      </div>
 
       <!-- TEMA -->
-      <div class="card" style="padding: 24px; margin-bottom: 24px;">
-        <h3 style="margin-bottom: 16px;">🎨 Tema UI</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 12px;">Pilih tema (apply global ke semua halaman):</p>
-        <div id="theme-selector">
-          <div class="theme-option active" data-theme="ocean" style="background: linear-gradient(135deg, #0066cc, #e6f2ff);" onclick="selectTheme('ocean')"></div>
-          <div class="theme-option" data-theme="sunset" style="background: linear-gradient(135deg, #e17055, #ffeaa7);" onclick="selectTheme('sunset')"></div>
-          <div class="theme-option" data-theme="forest" style="background: linear-gradient(135deg, #2d6a4f, #d8f3dc);" onclick="selectTheme('forest')"></div>
-          <div class="theme-option" data-theme="midnight" style="background: linear-gradient(135deg, #6c5ce7, #0f0f1a);" onclick="selectTheme('midnight')"></div>
-          <div class="theme-option" data-theme="lavender" style="background: linear-gradient(135deg, #9b59b6, #f5eef8);" onclick="selectTheme('lavender')"></div>
-          <div class="theme-option" data-theme="cherry" style="background: linear-gradient(135deg, #e84393, #fd79a8);" onclick="selectTheme('cherry')"></div>
-          <div class="theme-option" data-theme="monochrome" style="background: linear-gradient(135deg, #2d3436, #dfe6e9);" onclick="selectTheme('monochrome')"></div>
-          <div class="theme-option" data-theme="mint" style="background: linear-gradient(135deg, #00b894, #dff9fb);" onclick="selectTheme('mint')"></div>
-          <div class="theme-option" data-theme="coffee" style="background: linear-gradient(135deg, #6f4e37, #eaddcf);" onclick="selectTheme('coffee')"></div>
-          <div class="theme-option" data-theme="royal" style="background: linear-gradient(135deg, #f1c40f, #1a1a2e);" onclick="selectTheme('royal')"></div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-palette"></i> Tema UI</div>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+
+      <!-- ADMIN FEE -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-percentage"></i> Admin Fee Kas</div>
+        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4);">
+          <div class="form-group">
+            <label class="form-label">Top Up — Persen (%)</label>
+            <input type="number" class="input" id="fee-topup-percent" value="0" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Top Up — Flat (Rp)</label>
+            <input type="number" class="input" id="fee-topup-flat" value="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tarik Tunai — Persen (%)</label>
+            <input type="number" class="input" id="fee-tarik-percent" value="0" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tarik Tunai — Flat (Rp)</label>
+            <input type="number" class="input" id="fee-tarik-flat" value="0" min="0">
+          </div>
         </div>
+        <button class="btn btn-primary" onclick="saveAdminFee()" style="margin-top:var(--space-3);">
+          <i class="fas fa-save"></i> Simpan Admin Fee
+        </button>
       </div>
 
       <!-- PRINTER -->
-      <div class="card" style="padding: 24px; margin-bottom: 24px;">
-        <h3 style="margin-bottom: 16px;">🖨️ Printer Bluetooth</h3>
-        <div style="margin-bottom: 12px;">
-          <strong>Status:</strong> <span id="printer-status">Belum terhubung</span>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-print"></i> Printer Bluetooth</div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-title">Auto Print Struk</div>
+            <div class="toggle-desc">Cetak struk otomatis setelah transaksi</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="auto-print" onchange="savePrinterConfig()">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <button class="btn-primary" onclick="connectPrinter()">🔗 Hubungkan Printer</button>
-        <div style="margin-top: 12px;">
-          <label style="display: block; margin-bottom: 6px; color: var(--text-secondary);">Auto Print Struk</label>
-          <input type="checkbox" id="auto-print" onchange="savePrinterConfig()">
+        <div style="margin-top:var(--space-4);">
+          <button class="btn btn-secondary" onclick="connectPrinter()">
+            <i class="fas fa-bluetooth-b"></i> Hubungkan Printer
+          </button>
+          <span id="printer-status" style="margin-left:var(--space-3); font-size:13px; color:var(--text-muted);">Belum terhubung</span>
         </div>
       </div>
 
       <!-- STRUK -->
-      <div class="card" style="padding: 24px; margin-bottom: 24px;">
-        <h3 style="margin-bottom: 16px;">🧾 Format Struk</h3>
-        <div style="margin-bottom: 12px;">
-          <label style="display: block; margin-bottom: 6px;">Header Struk</label>
-          <textarea id="receipt-header" class="input" rows="3" placeholder="NAMA TOKO&#10;Alamat&#10;Telp"></textarea>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-receipt"></i> Format Struk</div>
+        <div class="form-group">
+          <label class="form-label">Header Struk</label>
+          <textarea class="input" id="receipt-header" rows="3" placeholder="NAMA TOKO&#10;Alamat Toko&#10;Telp: 0812-3456-7890"></textarea>
         </div>
-        <div style="margin-bottom: 12px;">
-          <label style="display: block; margin-bottom: 6px;">Footer Struk</label>
-          <textarea id="receipt-footer" class="input" rows="3" placeholder="Terima Kasih"></textarea>
+        <div class="form-group">
+          <label class="form-label">Footer Struk</label>
+          <textarea class="input" id="receipt-footer" rows="3" placeholder="Terima Kasih Atas Kunjungan Anda&#10;Struk Ini Adalah Bukti Pembayaran"></textarea>
         </div>
-        <button class="btn-primary" onclick="saveReceiptConfig()">💾 Simpan Format</button>
+        <button class="btn btn-primary" onclick="saveReceiptConfig()">
+          <i class="fas fa-save"></i> Simpan Format
+        </button>
       </div>
 
-      <button class="btn-primary" onclick="window.settingService.reset(); location.reload();" style="background: var(--danger);">🔄 Reset ke Default</button>
+      <!-- RESET -->
+      <div class="card" style="border-color: var(--danger-light);">
+        <div class="card-title"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Zona Berbahaya</div>
+        <p style="color:var(--text-secondary); font-size:14px; margin-bottom:var(--space-4);">
+          Reset semua pengaturan ke default. Aksi ini tidak dapat dibatalkan.
+        </p>
+        <button class="btn btn-danger" onclick="resetSettings()">
+          <i class="fas fa-undo"></i> Reset ke Default
+        </button>
+      </div>
     </main>
   </div>
 
+  <!-- Services -->
+  <script src="js/core/firebase-config.js"></script>
   <script src="js/services/setting-service.js"></script>
+  <script src="js/services/user-service.js"></script>
   <script src="js/services/transaction-service.js"></script>
+  <script src="js/services/stock-service.js"></script>
   <script src="js/services/cash-service.js"></script>
   <script src="js/services/debt-service.js"></script>
   <script src="js/services/printer-service.js"></script>
   <script src="js/app.js"></script>
 
   <script>
-    // Load current settings
-    const cfg = window.settingService;
-    
-    // Apply active theme UI
-    function selectTheme(name) {
-      cfg.setTheme(name);
-      document.querySelectorAll('.theme-option').forEach(el => {
-        el.classList.toggle('active', el.dataset.theme === name);
+    var themes = [
+      { name: 'ocean',   label: 'Ocean',   color: 'linear-gradient(135deg, #0ea5e9, #0284c7)' },
+      { name: 'emerald', label: 'Emerald', color: 'linear-gradient(135deg, #10b981, #059669)' },
+      { name: 'purple',  label: 'Purple',  color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+      { name: 'sunset',  label: 'Sunset',  color: 'linear-gradient(135deg, #f97316, #ea580c)' },
+      { name: 'rose',    label: 'Rose',    color: 'linear-gradient(135deg, #f43f5e, #e11d48)' },
+      { name: 'midnight',label: 'Midnight',color: 'linear-gradient(135deg, #6366f1, #4338ca)' },
+      { name: 'forest',  label: 'Forest',  color: 'linear-gradient(135deg, #22c55e, #16a34a)' },
+      { name: 'coffee',  label: 'Coffee',  color: 'linear-gradient(135deg, #92400e, #78350f)' },
+      { name: 'lavender',label: 'Lavender',color: 'linear-gradient(135deg, #a855f7, #9333ea)' },
+      { name: 'monochrome',label: 'Mono',   color: 'linear-gradient(135deg, #475569, #334155)' }
+    ];
+
+    function renderThemeSelector() {
+      var grid = document.getElementById('theme-grid');
+      var current = window.settingService.getTheme();
+      grid.innerHTML = '';
+      themes.forEach(function(t) {
+        var div = document.createElement('div');
+        div.className = 'theme-option' + (t.name === current ? ' active' : '');
+        div.onclick = function() { selectTheme(t.name); };
+        div.innerHTML =
+          '<div class="color-ball" style="background:' + t.color + ';"></div>' +
+          '<span class="theme-name">' + t.label + '</span>';
+        grid.appendChild(div);
       });
     }
-    // Init active
-    const currentTheme = cfg.getTheme();
-    document.querySelectorAll('.theme-option').forEach(el => {
-      el.classList.toggle('active', el.dataset.theme === currentTheme);
-    });
 
-    // Printer
-    async function connectPrinter() {
-      const result = await window.printerService.connect();
-      if (result.success) {
-        document.getElementById('printer-status').textContent = 'Terhubung: ' + result.deviceName;
-        savePrinterConfig();
+    function selectTheme(name) {
+      window.settingService.setTheme(name);
+      document.body.className = 'theme-' + name + (window.settingService.getDarkMode() ? ' dark-mode' : '');
+      renderThemeSelector();
+      showToast('Tema ' + name + ' diterapkan', 'success');
+    }
+
+    function toggleDarkMode() {
+      var isDark = document.body.classList.toggle('dark-mode');
+      window.settingService.setDarkMode(isDark);
+      var btn = document.getElementById('btn-theme');
+      btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
+
+    function toggleSidebar() {
+      var sb = document.getElementById('sidebar');
+      var ov = document.getElementById('sidebar-overlay');
+      var isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        sb.classList.toggle('show-mobile');
+        ov.classList.toggle('active');
+      }
+    }
+
+    function logout() {
+      if (confirm('Yakin ingin logout?')) {
+        window.userService.logout();
+        location.href = 'login.html';
+      }
+    }
+
+    function toggleProfile() {
+      var user = window.userService.getCurrent();
+      var name = user.name || user.username || 'Kasir';
+      alert('👤 ' + name + '\n🏷️ Role: ' + (user.role || 'Kasir'));
+    }
+
+    function showToast(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toast-container') || document.body;
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed; top:' + (document.querySelector('.header').offsetHeight + 16) + 'px; right:16px; z-index:3000; padding:14px 20px; border-radius:14px; background:var(--surface); border:1px solid var(--border); box-shadow:0 16px 40px rgba(0,0,0,0.12); display:flex; align-items:center; gap:12px; font-size:14px; font-weight:500; color:var(--text); transform:translateX(120%); transition:transform 0.25s; max-width:360px; border-left:4px solid var(--' + type + ');';
+      var icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+      toast.innerHTML = '<i class="fas ' + icon + '" style="color:var(--' + type + '); font-size:18px;"></i><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() { toast.style.transform = 'translateX(0)'; }, 10);
+      setTimeout(function() { toast.style.transform = 'translateX(120%)'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
+    }
+
+    /* ADMIN FEE */
+    function saveAdminFee() {
+      var fee = {
+        topup_percent: parseInt(document.getElementById('fee-topup-percent').value) || 0,
+        topup_flat: parseInt(document.getElementById('fee-topup-flat').value) || 0,
+        tarik_percent: parseInt(document.getElementById('fee-tarik-percent').value) || 0,
+        tarik_flat: parseInt(document.getElementById('fee-tarik-flat').value) || 0
+      };
+      db.ref('settings/app/admin_fee').set(fee).then(function() {
+        showToast('Admin fee disimpan ke Firebase', 'success');
+      }).catch(function(err) {
+        showToast('Gagal: ' + err.message, 'error');
+      });
+    }
+
+    function loadAdminFee() {
+      db.ref('settings/app/admin_fee').once('value').then(function(snap) {
+        var fee = snap.val() || { topup_percent: 0, topup_flat: 0, tarik_percent: 0, tarik_flat: 0 };
+        document.getElementById('fee-topup-percent').value = fee.topup_percent || 0;
+        document.getElementById('fee-topup-flat').value = fee.topup_flat || 0;
+        document.getElementById('fee-tarik-percent').value = fee.tarik_percent || 0;
+        document.getElementById('fee-tarik-flat').value = fee.tarik_flat || 0;
+      });
+    }
+
+    /* PRINTER */
+    function connectPrinter() {
+      if (window.printerService && window.printerService.connect) {
+        window.printerService.connect().then(function(result) {
+          if (result.success) {
+            document.getElementById('printer-status').textContent = 'Terhubung: ' + result.deviceName;
+            showToast('Printer terhubung', 'success');
+          } else {
+            document.getElementById('printer-status').textContent = 'Gagal: ' + result.error;
+            showToast(result.error, 'error');
+          }
+        });
       } else {
-        document.getElementById('printer-status').textContent = 'Gagal: ' + result.error;
+        document.getElementById('printer-status').textContent = 'Service printer tidak tersedia';
+        showToast('Printer service belum siap', 'warning');
       }
     }
 
     function savePrinterConfig() {
-      cfg.setPrinterConfig({
+      var cfg = {
         auto_print: document.getElementById('auto-print').checked,
-        device_name: window.printerService.device?.name || null
-      });
+        device_name: null
+      };
+      window.settingService.setPrinterConfig(cfg);
+      showToast('Konfigurasi printer disimpan', 'success');
     }
 
-    // Receipt
-    const receipt = cfg.getReceiptConfig();
-    document.getElementById('receipt-header').value = receipt.header;
-    document.getElementById('receipt-footer').value = receipt.footer;
-
+    /* RECEIPT */
     function saveReceiptConfig() {
-      cfg.setReceiptConfig({
+      var cfg = {
         header: document.getElementById('receipt-header').value,
         footer: document.getElementById('receipt-footer').value
-      });
-      alert('Format struk disimpan');
+      };
+      window.settingService.setReceiptConfig(cfg);
+      showToast('Format struk disimpan', 'success');
     }
+
+    function loadReceiptConfig() {
+      var cfg = window.settingService.getReceiptConfig();
+      document.getElementById('receipt-header').value = cfg.header || '';
+      document.getElementById('receipt-footer').value = cfg.footer || '';
+    }
+
+    /* RESET */
+    function resetSettings() {
+      if (!confirm('Yakin reset SEMUA pengaturan ke default?')) return;
+      window.settingService.reset();
+      db.ref('settings/app').remove().then(function() {
+        showToast('Pengaturan direset', 'success');
+        setTimeout(function() { location.reload(); }, 800);
+      });
+    }
+
+    /* INIT */
+    document.addEventListener('DOMContentLoaded', function() {
+      // Auth check
+      auth.onAuthStateChanged(function(user) {
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+        db.ref('users/' + user.uid).once('value').then(function(snap) {
+          var profile = snap.val() || {};
+          var session = {
+            id: user.uid,
+            name: profile.name || profile.username || 'Kasir',
+            username: profile.username || '',
+            role: profile.role || 'Kasir'
+          };
+          localStorage.setItem('webpos_session_v3', JSON.stringify(session));
+          if (window.userService) window.userService.session = session;
+          document.getElementById('nav-user-name').textContent = session.name;
+          document.getElementById('nav-user-role').textContent = (session.role || 'KASIR').toUpperCase();
+        });
+      });
+
+      // Theme
+      var theme = window.settingService ? window.settingService.getTheme() : 'ocean';
+      document.body.className = 'theme-' + theme;
+      if (window.settingService && window.settingService.getDarkMode && window.settingService.getDarkMode()) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('btn-theme').innerHTML = '<i class="fas fa-sun"></i>';
+      }
+
+      renderThemeSelector();
+      loadAdminFee();
+      loadReceiptConfig();
+
+      // Load printer config
+      var pCfg = window.settingService ? window.settingService.getPrinterConfig() : {};
+      document.getElementById('auto-print').checked = !!pCfg.auto_print;
+    });
   </script>
 </body>
 </html>
