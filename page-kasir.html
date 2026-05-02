@@ -1718,24 +1718,7 @@
     /* ============================================
        DATA & STATE
        ============================================ */
-    var products = [
-      { id: 'p1', name: 'Nasi Goreng Spesial', price: 25000, stock: 50, category: 'makanan', image: '🍛' },
-      { id: 'p2', name: 'Mie Ayam Bakso', price: 22000, stock: 40, category: 'makanan', image: '🍜' },
-      { id: 'p3', name: 'Ayam Goreng Crispy', price: 28000, stock: 30, category: 'makanan', image: '🍗' },
-      { id: 'p4', name: 'Es Teh Manis', price: 5000, stock: 100, category: 'minuman', image: '🍹' },
-      { id: 'p5', name: 'Kopi Hitam', price: 8000, stock: 80, category: 'minuman', image: '☕' },
-      { id: 'p6', name: 'Jus Alpukat', price: 15000, stock: 25, category: 'minuman', image: '🥑' },
-      { id: 'p7', name: 'Chitato', price: 12000, stock: 60, category: 'snack', image: '🥔' },
-      { id: 'p8', name: 'Oreo', price: 10000, stock: 45, category: 'snack', image: '🍪' },
-      { id: 'p9', name: 'Marlboro', price: 35000, stock: 20, category: 'rokok', image: '🚬' },
-      { id: 'p10', name: 'Sampoerna', price: 28000, stock: 15, category: 'rokok', image: '🚬' },
-      { id: 'p11', name: 'Pulsa 50K', price: 50000, stock: 999, category: 'pulsa', image: '📱' },
-      { id: 'p12', name: 'Pulsa 100K', price: 100000, stock: 999, category: 'pulsa', image: '📱' },
-      { id: 'p13', name: 'Tissue Paseo', price: 15000, stock: 35, category: 'lainnya', image: '🧻' },
-      { id: 'p14', name: 'Sabun Lifebuoy', price: 8000, stock: 28, category: 'lainnya', image: '🧼' },
-      { id: 'p15', name: 'Sosis Solo', price: 18000, stock: 22, category: 'makanan', image: '🌭' },
-      { id: 'p16', name: 'Es Krim Cone', price: 10000, stock: 40, category: 'snack', image: '🍦' }
-    ];
+    var products = [];
 
     var cart = [];
     var currentCategory = 'all';
@@ -1812,6 +1795,26 @@
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
       document.body.style.overflow = '';
+    }
+
+    /* ============================================
+       LOAD PRODUK
+       ============================================ */
+
+      function loadProductsFromFirebase() {
+      db.ref('products').once('value').then(function(snap) {
+        var data = snap.val() || {};
+        products = [];
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            products.push({ id: key, ...data[key] });
+          }
+        }
+        renderProducts();
+      }).catch(function(err) {
+        console.error('Load products:', err);
+        showToast('Gagal memuat produk dari database', 'error');
+      });
     }
 
     /* ============================================
@@ -2320,7 +2323,7 @@
         document.getElementById('btn-theme').innerHTML = '<i class="fas fa-sun"></i>';
       }
 
-      renderProducts();
+      loadProductsFromFirebase();
       renderCart();
       renderHoldList();
 
