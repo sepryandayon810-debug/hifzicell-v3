@@ -91,7 +91,7 @@
 
     /* TOOLBAR */
     .toolbar {
-      display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;
+      display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; align-items:center;
     }
     .search-box { position:relative; flex:1; min-width:240px; max-width:400px; }
     .search-box input {
@@ -104,14 +104,22 @@
       padding:10px 14px; border-radius:12px; border:1.5px solid var(--border);
       background:var(--bg); color:var(--text); font-size:14px; cursor:pointer;
     }
+    .btn-export, .btn-import {
+      padding:10px 16px; border-radius:12px; border:1.5px solid var(--border);
+      background:var(--surface); color:var(--text-secondary);
+      font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;
+      transition:all 0.2s;
+    }
+    .btn-export:hover { border-color:var(--success); color:var(--success); background:var(--success-light); }
+    .btn-import:hover { border-color:var(--info); color:var(--info); background:var(--info-light); }
 
-    /* PRODUCT GRID */
+    /* PRODUCT GRID — Styling mirip Kasir */
     .product-grid {
-      display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:20px;
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:20px;
     }
     .product-card {
       background:var(--card); border:1.5px solid var(--border);
-      border-radius:20px; overflow:hidden; transition:all 0.25s;
+      border-radius:20px; overflow:hidden; transition:all 0.25s; position:relative;
     }
     .product-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary); }
     .product-card .img-wrap {
@@ -121,13 +129,13 @@
     }
     .product-card .badge-stock {
       position:absolute; top:10px; right:10px;
-      padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700;
+      padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700; text-transform:uppercase;
     }
     .badge-stock.ok { background:var(--success-light); color:var(--success); }
     .badge-stock.low { background:var(--warning-light); color:var(--warning); }
     .badge-stock.empty { background:var(--danger-light); color:var(--danger); }
     .product-card .info { padding:16px; }
-    .product-card .name { font-size:15px; font-weight:700; margin-bottom:4px; }
+    .product-card .name { font-size:15px; font-weight:700; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .product-card .price { font-size:18px; font-weight:800; color:var(--primary); margin-bottom:8px; }
     .product-card .meta { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
     .product-card .actions { display:flex; gap:8px; }
@@ -188,6 +196,8 @@
       .sidebar.show-mobile { transform:translateX(0); }
       .main { margin-left:0; padding:20px; }
       .product-grid { grid-template-columns:repeat(2, 1fr); }
+      .toolbar { flex-direction:column; align-items:stretch; }
+      .search-box { max-width:100%; }
     }
   </style>
 </head>
@@ -255,6 +265,9 @@
         <option value="pulsa">Pulsa</option>
         <option value="lainnya">Lainnya</option>
       </select>
+      <button class="btn-export" onclick="exportCSV()"><i class="fas fa-file-download"></i> Export CSV</button>
+      <button class="btn-import" onclick="document.getElementById('import-file').click()"><i class="fas fa-file-upload"></i> Import CSV</button>
+      <input type="file" id="import-file" accept=".csv" style="display:none;" onchange="importCSV(this)">
     </div>
 
     <div class="product-grid" id="product-grid">
@@ -311,13 +324,12 @@
   <!-- TOAST -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- FIREBASE -->
+  <!-- FIREBASE & SERVICES -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="js/core/firebase-config.js"></script>
   <script src="js/services/setting-service.js"></script>
-
 
   <script>
     var products = [];
@@ -346,7 +358,6 @@
       var btn=document.getElementById('btn-theme');
       if(btn) btn.innerHTML=isDark?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
     }
-
 
     function logout(){
       if(confirm('Yakin logout?')){ auth.signOut(); location.href='login.html'; }
@@ -459,9 +470,55 @@
       });
     }
 
+    /* ===== EXPORT CSV ===== */
+    function exportCSV(){
+      if(products.length===0){showToast('Tidak ada produk untuk export','error');return;}
+      var csv='ID,Nama,Kategori,Harga,Stok,Gambar\n';
+      products.forEach(function(p){
+        csv+=p.id+',"'+p.name+'",'+p.category+','+p.price+','+p.stock+',"'+p.image+'"\n';
+      });
+      var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url; a.download='produk-kasirin-'+new Date().toISOString().split('T')[0]+'.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(products.length+' produk di-export ke CSV','success');
+    }
+
+    /* ===== IMPORT CSV ===== */
+    function importCSV(input){
+      var file=input.files[0];
+      if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var text=e.target.result;
+        var lines=text.split('\n');
+        var imported=0;
+        for(var i=1;i<lines.length;i++){
+          var line=lines[i].trim();
+          if(!line)continue;
+          var cols=line.split(',');
+          if(cols.length<5)continue;
+          var name=cols[1].replace(/"/g,'').trim();
+          var category=cols[2].trim();
+          var price=parseInt(cols[3])||0;
+          var stock=parseInt(cols[4])||0;
+          var image=cols[5]?cols[5].replace(/"/g,'').trim():'📦';
+          if(!name)continue;
+          var id='PROD-'+Date.now()+'-'+i;
+          db.ref('products/'+id).set({id:id,name:name,category:category,price:price,stock:stock,image:image,createdAt:new Date().toISOString()});
+          imported++;
+        }
+        showToast(imported+' produk di-import dari CSV','success');
+        input.value='';
+        setTimeout(loadProducts,1000);
+      };
+      reader.readAsText(file);
+    }
+
     /* INIT */
     document.addEventListener('DOMContentLoaded', function(){
-      // Theme init — sama persis dengan page-kasir.html
       var theme = window.settingService ? window.settingService.getTheme() : 'ocean';
       document.body.className = 'theme-' + theme;
       if(window.settingService && window.settingService.getDarkMode && window.settingService.getDarkMode()){
